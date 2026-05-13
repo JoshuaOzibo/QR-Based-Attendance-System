@@ -3,6 +3,9 @@ import { env } from '../config/env.js';
 import { getDistanceFromLatLngInMeters } from '../utils/geo.js';
 import { AttendanceRepository } from '../repositories/attendanceRepository.js';
 import { StudentRepository } from '../repositories/studentRepository.js';
+import { EventEmitter } from 'events';
+
+export const attendanceEmitter = new EventEmitter();
 
 export class AttendanceService {
     static async markAttendance(data) {
@@ -43,6 +46,9 @@ export class AttendanceService {
             const attendance = await AttendanceRepository.createAttendance(attendanceData, session);
 
             await session.commitTransaction();
+            
+            attendanceEmitter.emit('new_attendance', attendance[0]);
+            
             return attendance[0];
         } catch (error) {
             await session.abortTransaction();

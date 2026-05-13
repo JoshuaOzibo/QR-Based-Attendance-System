@@ -22,6 +22,10 @@ import {
   CartesianGrid,
 } from "recharts";
 
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { fetchAPI } from "@/lib/api";
+
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
@@ -37,16 +41,59 @@ const submissions = Array.from({ length: 12 }).map((_, i) => ({
   count: 30 + Math.round(Math.random() * 90),
 }));
 
-const live = [
-  { name: "Marcus Holloway", roll: "CS2024-042", time: "10:14:22", verify: "GPS Verified", status: "Present" },
-  { name: "Elena Rodriguez", roll: "CS2024-118", time: "10:14:48", verify: "GPS Verified", status: "Present" },
-  { name: "Sarah Chen", roll: "CS2024-003", time: "10:15:01", verify: "Network Check", status: "Present" },
-  { name: "William Knight", roll: "CS2024-077", time: "10:15:14", verify: "GPS Proxy?", status: "Flagged" },
-  { name: "Jordan Davies", roll: "CS2024-029", time: "10:15:38", verify: "GPS Verified", status: "Present" },
-  { name: "Amelia Soto", roll: "CS2024-051", time: "10:15:55", verify: "GPS Verified", status: "Present" },
-];
-
 function AdminPage() {
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data: initialLive = [] } = useQuery({
+    queryKey: ['attendance', 'live', today],
+    queryFn: () => fetchAPI<any>(`/api/attendance/by-date?date=${today}`).then(res => res.data)
+  });
+
+  const [liveStream, setLiveStream] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (initialLive && Array.isArray(initialLive)) {
+      setLiveStream(initialLive);
+    }
+  }, [initialLive]);
+
+  useEffect(() => {
+    const sseUrl = import.meta.env.VITE_API_BASE_URL 
+      ? `${import.meta.env.VITE_API_BASE_URL}/api/attendance/live`
+      : 'http://localhost:5000/api/attendance/live';
+    
+    const evtSource = new EventSource(sseUrl);
+    evtSource.onmessage = (event) => {
+      try {
+        const newRecord = JSON.parse(event.data);
+        setLiveStream(prev => [newRecord, ...prev]);
+      } catch(e) {}
+    };
+    return () => evtSource.close();
+  }, []);
+
+  const handleGenerateQR = async () => {
+    setIsGenerating(true);
+    try {
+      const res = await fetchAPI<any>('/api/generate-qr');
+      setQrCode(`http://localhost:5000${res.qrImage}`);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const live = liveStream.map(r => ({
+    name: r.name || "Unknown",
+    roll: r.universityRollNo || "N/A",
+    time: r.time || new Date(r.createdAt || Date.now()).toLocaleTimeString(),
+    verify: r.distanceFromClass && r.distanceFromClass < 50 ? "GPS Verified" : "Network Check",
+    status: r.status === "present" ? "Present" : "Flagged",
+    rawId: r._id
+  }));
   return (
     <div className="flex min-h-screen">
       <AdminSidebar />
@@ -91,14 +138,21 @@ function AdminPage() {
               <p className="text-sm text-muted-foreground">Hall B-12 · Spring 2026 · 60 students enrolled</p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button className="inline-flex items-center gap-2 rounded-md border border-border bg-card/40 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-card">
-                <Play className="size-4" /> Generate New QR
+              <button onClick={handleGenerateQR} disabled={isGenerating} className="inline-flex items-center gap-2 rounded-md border border-border bg-card/40 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50">
+                <Play className="size-4" /> {isGenerating ? "Generating..." : "Generate New QR"}
               </button>
               <button className="inline-flex items-center gap-2 rounded-md bg-destructive/15 px-4 py-2.5 text-sm font-semibold text-destructive ring-1 ring-destructive/30 transition-colors hover:bg-destructive/25">
                 <Square className="size-4" /> End Session
               </button>
             </div>
           </div>
+          
+          {qrCode && (
+            <div className="rounded-2xl border border-border bg-card/40 p-6 flex flex-col items-center">
+              <h3 className="text-lg font-semibold mb-4">Active Session QR</h3>
+              <img src={qrCode} alt="Scan to mark attendance" className="w-64 h-64 rounded-lg bg-white p-2" />
+            </div>
+          )}
 
           {/* KPIs */}
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -198,11 +252,16 @@ function AdminPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
-                  {live.map((r) => (
-                    <tr key={r.roll} className="transition-colors hover:bg-card/60">
+                  {live.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-muted-foreground">No attendance recorded today yet.</td>
+                    </tr>
+                  )}
+                  {live.map((r: any) => (
+                    <tr key={r.rawId || r.roll + r.time} className="transition-colors hover:bg-card/60">
                       <td className="flex items-center gap-3 px-6 py-3.5 font-medium">
                         <div className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
-                          {r.name.split(" ").map((p) => p[0]).join("")}
+                          {r.name.split(" ").map((p: any) => p[0]).join("")}
                         </div>
                         {r.name}
                       </td>

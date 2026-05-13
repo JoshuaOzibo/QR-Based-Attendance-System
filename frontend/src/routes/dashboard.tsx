@@ -18,6 +18,9 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { useQuery } from "@tanstack/react-query";
+import { fetchAPI } from "@/lib/api";
+
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
@@ -28,21 +31,39 @@ export const Route = createFileRoute("/dashboard")({
   component: StudentDashboard,
 });
 
-const trend = Array.from({ length: 14 }).map((_, i) => ({
-  day: `D${i + 1}`,
-  pct: 70 + Math.round(Math.sin(i / 1.6) * 10 + Math.random() * 8),
-}));
-
-const recent = [
-  { date: "May 12", course: "CS-402 Systems Architecture", time: "10:14", status: "Present" },
-  { date: "May 12", course: "MA-211 Linear Algebra", time: "08:58", status: "Present" },
-  { date: "May 11", course: "CS-340 Networks", time: "—", status: "Absent" },
-  { date: "May 11", course: "EE-301 Signals", time: "11:02", status: "Present" },
-  { date: "May 10", course: "CS-402 Systems Architecture", time: "10:01", status: "Present" },
-];
-
 function StudentDashboard() {
-  const percent = 84;
+  const rollNo = "AIT/HND/24/00036";
+  
+  const { data, isLoading } = useQuery({
+    queryKey: ['studentAttendance', rollNo],
+    queryFn: () => fetchAPI<any>(`/api/students/${encodeURIComponent(rollNo)}/attendance`).then(res => res.data)
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <SiteNav />
+        <main className="mx-auto max-w-7xl px-6 py-10 flex items-center justify-center h-64">
+           <div className="animate-pulse text-muted-foreground">Loading dashboard...</div>
+        </main>
+      </div>
+    );
+  }
+
+  const percent = data?.attendancePercentage ?? 0;
+  
+  // Map trend from chartData
+  const trend = data?.chartData?.labels?.map((label: string, i: number) => ({
+    day: label,
+    pct: data.chartData.studentAttendance[i]
+  })) || [];
+
+  const recent = data?.attendanceRecords?.slice().reverse().slice(0, 5).map((r: any) => ({
+    date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    course: "System Verified", // Backend doesn't store course name yet
+    time: r.time || new Date(r.createdAt).toLocaleTimeString(),
+    status: r.status === "present" ? "Present" : "Absent"
+  })) || [];
   return (
     <div className="min-h-screen">
       <SiteNav />
@@ -50,11 +71,11 @@ function StudentDashboard() {
         <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
           <div>
             <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-              Welcome back, Marcus
+              Welcome back
             </div>
             <h1 className="mt-2 text-4xl font-semibold tracking-tight">Your attendance pulse</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              CS2024-042 · Section A · Spring 2026
+              {rollNo}
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-md border border-border bg-card/40 px-3 py-2 text-xs text-muted-foreground">
@@ -72,11 +93,11 @@ function StudentDashboard() {
             <div className="mt-6 grid grid-cols-2 gap-3 text-center text-sm">
               <div className="rounded-lg border border-border bg-card/30 p-3">
                 <div className="text-[10px] uppercase text-muted-foreground">Present</div>
-                <div className="mt-1 text-lg font-semibold text-success">38</div>
+                <div className="mt-1 text-lg font-semibold text-success">{data?.presentDays ?? 0}</div>
               </div>
               <div className="rounded-lg border border-border bg-card/30 p-3">
-                <div className="text-[10px] uppercase text-muted-foreground">Absent</div>
-                <div className="mt-1 text-lg font-semibold text-warning">7</div>
+                <div className="text-[10px] uppercase text-muted-foreground">Total Classes</div>
+                <div className="mt-1 text-lg font-semibold text-primary">{data?.totalClasses ?? 0}</div>
               </div>
             </div>
             <div className="mt-5 flex items-start gap-2 rounded-lg bg-success/10 px-3 py-3 text-xs text-success">
@@ -188,7 +209,7 @@ function StudentDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border/60">
-              {recent.map((r, i) => (
+              {recent.map((r: any, i: number) => (
                 <tr key={i} className="transition-colors hover:bg-card/60">
                   <td className="px-6 py-3.5 font-mono text-xs text-muted-foreground">{r.date}</td>
                   <td className="px-6 py-3.5">{r.course}</td>

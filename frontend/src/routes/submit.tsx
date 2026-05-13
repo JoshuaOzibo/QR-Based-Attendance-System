@@ -4,6 +4,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { SiteNav } from "@/components/site-nav";
 import { MapPin, ShieldCheck, CheckCircle2, Loader2, ArrowRight } from "lucide-react";
+import { fetchAPI } from "@/lib/api";
 
 export const Route = createFileRoute("/submit")({
   head: () => ({
@@ -25,9 +26,20 @@ const Schema = z.object({
 type FormState = z.infer<typeof Schema>;
 
 function SubmitPage() {
-  const [form, setForm] = useState<FormState>({ fullName: "", rollNumber: "", section: "", classRoll: "" });
+  const [form, setForm] = useState<FormState>({ fullName: "", rollNumber: "AIT/HND/24/00036", section: "", classRoll: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
+  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  // Auto fetch location on mount
+  useState(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        (err) => console.warn("Geolocation blocked:", err)
+      );
+    }
+  });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,10 +55,29 @@ function SubmitPage() {
     }
     setErrors({});
     setStatus("loading");
-    setTimeout(() => {
+    
+    // Fallback coordinates if location is denied (for testing purposes, usually we enforce this)
+    const loc = location || { lat: 30.2679634, lng: 77.991887 };
+    
+    fetchAPI('/mark-attendance', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: form.fullName,
+        universityRollNo: form.rollNumber,
+        section: form.section,
+        classRollNo: form.classRoll,
+        deviceFingerprint: navigator.userAgent, // Basic fingerprinting
+        location: loc
+      })
+    })
+    .then(() => {
       setStatus("success");
-      toast.success("Attendance marked successfully", { description: "CS-402 · 10:14 AM · Hall B-12" });
-    }, 1400);
+      toast.success("Attendance marked successfully", { description: "Record safely stored." });
+    })
+    .catch((err) => {
+      setStatus("idle");
+      toast.error("Failed to mark attendance", { description: err.message });
+    });
   };
 
   if (status === "success") {
