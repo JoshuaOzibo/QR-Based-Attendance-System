@@ -9,8 +9,6 @@ const fs = require('fs');
 const crypto = require('crypto');
 const helmet = require("helmet");
 //const sha256 = require('./sha256');
-const { execSync } = require('child_process');
-
 // Import models and routes
 const User = require("./models/User");
 const Attendance = require("./models/Attendance");
@@ -397,30 +395,12 @@ app.post('/api/consistent-hash', async (req, res) => {
             return res.status(400).json({ error: 'Input must be a non-empty string' });
         }
 
-        const escapedInput = input
-            .replace(/"/g, '\\"')
-            .replace(/\$/g, '\\$')
-            .replace(/`/g, '\\`');
-
-        const command = `java ConsistentHash "${escapedInput}"`;
-        
-        const result = execSync(command, { 
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'ignore'],
-            timeout: 5000
-        });
-
-        if (!/^[0-9a-f]{8}$/.test(result.trim())) {
-            throw new Error('Invalid hash format from Java');
-        }
-
-        res.json({ fingerprint: result.trim() });
+        const jsHash = consistentHashJS(input);
+        res.json({ fingerprint: jsHash });
     } catch (error) {
         console.error("Consistent hash error:", error);
-        const jsHash = consistentHashJS(req.body.input);
         res.status(500).json({ 
-            error: 'Java hashing failed. Used JS fallback.',
-            fingerprint: jsHash 
+            error: 'Hashing failed.'
         });
     }
 });
@@ -502,43 +482,19 @@ app.get('/verify-attendance', (req, res) => {
 });
 
 function getDistanceFromLatLngInMeters(lat1, lng1, lat2, lng2) {
-    try {
-        const command = `java Haversine ${lat1} ${lng1} ${lat2} ${lng2}`;
-        const result = execSync(command, { 
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'ignore']
-        });
-        return parseFloat(result.trim());
-    } catch (error) {
-        console.error("Java Haversine Error:", error.message);
-        const toRad = angle => (angle * Math.PI) / 180;
-        const R = 6371000;
-        const dLat = toRad(lat2 - lat1);
-        const dLng = toRad(lng2 - lng1);
-        const a = Math.sin(dLat / 2) ** 2 +
-                  Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                  Math.sin(dLng / 2) ** 2;
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
-    }
+    const toRad = angle => (angle * Math.PI) / 180;
+    const R = 6371000;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
 }
 
 function sha256(input) {
-    try {
-        const escapedInput = input.replace(/"/g, '\\"');
-        const command = `java SHA256 "${escapedInput}"`;
-        const result = execSync(command, { 
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'ignore']
-        });
-        return result.trim();
-    } catch (error) {
-        console.error("Java SHA-256 Error:", error.message);
-        // Fallback to crypto module if Java fails (more robust)
-        console.warn("Java SHA-256 failed. Using Node.js crypto fallback.");
-        return crypto.createHash('sha256').update(input).digest('hex');
-        // throw new Error("Failed to compute SHA-256 hash"); // Original behavior
-    }
+    return crypto.createHash('sha256').update(input).digest('hex');
 }
 
 app.get("/health", (req, res) => {
