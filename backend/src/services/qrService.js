@@ -15,7 +15,7 @@ const CACHE_TIME = 90000;
 // TODO: For production scale with multiple Node instances, 
 // replace these in-memory Maps with a Redis datastore.
 // Example: redisClient.set(sessionId, data, 'EX', 90)
-const activeSessions = new Map();
+export const activeSessions = new Map();
 const ipCache = new Map();
 
 if (!fs.existsSync(QR_CODE_DIR)) {

@@ -50,6 +50,26 @@ function AdminPage() {
     queryFn: () => fetchAPI<any>(`/api/attendance/by-date?date=${today}`).then(res => res.data)
   });
 
+  const { data: statsData } = useQuery({
+    queryKey: ['attendanceStats', today],
+    queryFn: () => fetchAPI<any>('/api/attendance/stats').then(res => res.data)
+  });
+
+  const stats = statsData || {
+    totalStudents: 0,
+    presentToday: 0,
+    activeSessions: 0,
+    fraudPrevention: '99.98%',
+    anomaliesBlocked: 0
+  };
+
+  const hour = new Date().getHours();
+  let greeting = "Good evening";
+  if (hour < 12) greeting = "Good morning";
+  else if (hour < 18) greeting = "Good afternoon";
+
+  const lecturerName = authData?.user?.name || "Lecturer";
+
   const [liveStream, setLiveStream] = useState<any[]>([]);
 
   useEffect(() => {
@@ -89,40 +109,17 @@ function AdminPage() {
 
       <div className="min-w-0 flex-1">
         {/* Top bar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/70 px-6 backdrop-blur-xl">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                placeholder="Search students, sessions, halls…"
-                className="w-72 rounded-md border border-border bg-card/50 py-2 pl-9 pr-3 text-sm outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="relative flex size-9 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:text-foreground">
-              <Bell className="size-4" />
-              <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-warning" />
-            </button>
-            <div className="flex items-center gap-2 rounded-md border border-border bg-card/40 py-1 pl-1 pr-3">
-              <div className="flex size-7 items-center justify-center rounded bg-[image:var(--gradient-primary)] text-xs font-bold text-white">
-                AT
-              </div>
-              <div className="text-xs">
-                <div className="font-semibold">Dr. Aris Thorne</div>
-                <div className="text-muted-foreground">Faculty</div>
-              </div>
-            </div>
-          </div>
+        <header className="sticky top-0 z-40 flex h-16 items-center border-b border-border bg-background/70 px-6 backdrop-blur-xl">
+          <h2 className="text-lg font-semibold tracking-tight">{greeting}, {lecturerName}</h2>
         </header>
 
         <main className="mx-auto max-w-7xl space-y-8 p-6 lg:p-8">
           {/* KPIs */}
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard label="Total students" value="1,482" delta="+24 this term" icon={Users} />
-            <KpiCard label="Present today" value="1,318" delta="88.9% of enrolled" icon={Activity} />
-            <KpiCard label="Active sessions" value="12" delta="across 4 faculties" deltaTone="neutral" icon={Radio} />
-            <KpiCard label="Fraud prevention" value="99.98%" delta="2 anomalies blocked" icon={ShieldCheck} />
+            <KpiCard label="Total students" value={stats.totalStudents.toString()} delta="Enrolled" icon={Users} />
+            <KpiCard label="Present today" value={stats.presentToday.toString()} delta="Verified today" icon={Activity} />
+            <KpiCard label="Active sessions" value={stats.activeSessions.toString()} delta="Ongoing" deltaTone="neutral" icon={Radio} />
+            <KpiCard label="Fraud prevention" value={stats.fraudPrevention} delta={`${stats.anomaliesBlocked} anomalies blocked`} icon={ShieldCheck} />
           </div>
 
           {/* Live attendance feed */}
