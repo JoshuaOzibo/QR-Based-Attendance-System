@@ -49,7 +49,9 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}) {
 
         // Upload to Cloudinary
         let qrImageUrl = '';
-        if (process.env.CLOUDINARY_API_KEY) {
+        const hasValidKey = process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_KEY !== 'your_api_key';
+        
+        if (hasValidKey) {
             const uploadResponse = await cloudinary.uploader.upload(dataUrl, {
                 folder: 'sentinel_qrcodes',
                 public_id: `qr_${timestamp}`,
