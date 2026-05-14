@@ -1,26 +1,21 @@
 import QRCode from 'qrcode';
-import path from 'path';
-import fs from 'fs';
 import crypto from 'crypto';
-import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
 import { env } from '../config/env.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Configure Cloudinary
+// It expects the process.env vars: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const QR_CODE_VALIDITY = 1.5 * 60 * 1000; // 1.5 minutes in ms
-const QR_CODE_DIR = env.QR_CODE_DIR || path.join(__dirname, '../../frontend/public/qrcodes');
 const CACHE_TIME = 90000;
 
-// TODO: For production scale with multiple Node instances, 
-// replace these in-memory Maps with a Redis datastore.
-// Example: redisClient.set(sessionId, data, 'EX', 90)
 export const activeSessions = new Map();
 const ipCache = new Map();
-
-if (!fs.existsSync(QR_CODE_DIR)) {
-    fs.mkdirSync(QR_CODE_DIR, { recursive: true });
-}
 
 export async function generateQRCode(ipAddress, sessionMetadata = {}) {
     if (ipCache.has(ipAddress)) {
@@ -44,16 +39,28 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}) {
             timestamp,
             hash
         }))}`;
-        const fileName = `qr_${timestamp}.png`;
-        const filePath = path.join(QR_CODE_DIR, fileName);
-
-        await QRCode.toFile(filePath, qrData, {
+        
+        // Generate base64 data URL
+        const dataUrl = await QRCode.toDataURL(qrData, {
             color: { dark: '#000000', light: '#ffffff' },
             width: 400,
             margin: 2
         });
 
-        // TODO: Replace with Redis Set operation
+        // Upload to Cloudinary
+        let qrImageUrl = '';
+        if (process.env.CLOUDINARY_API_KEY) {
+            const uploadResponse = await cloudinary.uploader.upload(dataUrl, {
+                folder: 'sentinel_qrcodes',
+                public_id: `qr_${timestamp}`,
+                overwrite: true
+            });
+            qrImageUrl = uploadResponse.secure_url;
+        } else {
+            console.warn("Cloudinary is not configured. Falling back to inline data URL.");
+            qrImageUrl = dataUrl;
+        }
+
         activeSessions.set(sessionId, {
             ip: ipAddress,
             expiresAt: timestamp + QR_CODE_VALIDITY,
@@ -61,17 +68,15 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}) {
         });
 
         setTimeout(() => {
-            // TODO: Redis keys can auto-expire, removing need for setTimeout
             activeSessions.delete(sessionId);
         }, QR_CODE_VALIDITY);
 
         const result = {
-            qrImage: `/qrcodes/${fileName}`,
+            qrImage: qrImageUrl,
             sessionId,
             expiresIn: QR_CODE_VALIDITY
         };
 
-        // TODO: Replace with Redis Set operation
         ipCache.set(ipAddress, {
             data: result,
             timestamp: Date.now()
@@ -85,7 +90,6 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}) {
 }
 
 export function validateSession(sessionId) {
-    // TODO: Replace with Redis Get operation
     const session = activeSessions.get(sessionId);
     if (!session) return false;
     
@@ -98,22 +102,6 @@ export function validateSession(sessionId) {
 }
 
 export function cleanupOldQRCodes() {
-    const now = Date.now();
-    fs.readdir(QR_CODE_DIR, (err, files) => {
-        if (err) {
-            console.error('Cleanup error:', err);
-            return;
-        }
-        files.forEach(file => {
-            if (file.startsWith('qr_') && file.endsWith('.png')) {
-                const fileTimestamp = parseInt(file.split('_')[1].split('.')[0]);
-                if (isNaN(fileTimestamp)) return;
-                if (now - fileTimestamp > QR_CODE_VALIDITY) {
-                    fs.unlink(path.join(QR_CODE_DIR, file), err => {
-                        if (err) console.error('Error deleting file:', file, err);
-                    });
-                }
-            }
-        });
-    });
+    // Legacy function. Cloudinary manages its own lifecycle or we can add delete calls later.
+    // Kept here so app.js doesn't crash on setInterval.
 }

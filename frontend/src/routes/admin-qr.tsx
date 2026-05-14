@@ -37,7 +37,8 @@ function AdminQRPage() {
     courseTitle: "",
     hall: "",
     lecturerName: "",
-    timeRange: ""
+    startTime: "",
+    endTime: ""
   });
 
   useEffect(() => {
@@ -55,11 +56,12 @@ function AdminQRPage() {
     try {
       const res = await fetchAPI<any>("/api/generate-qr", { 
         method: "POST",
-        body: JSON.stringify(form)
+        body: JSON.stringify({
+          ...form,
+          timeRange: `${form.startTime} - ${form.endTime}`
+        })
       });
-      // The API currently returns qrImage which is a path, let's format it.
-      // We had setQrCode(`http://localhost:5000${res.qrImage}`); in admin.tsx before.
-      setQrCode(`http://localhost:5000${res.qrImage}`);
+      setQrCode(res.qrImage);
     } catch (error) {
       console.error("Failed to generate QR:", error);
     } finally {
@@ -100,7 +102,7 @@ function AdminQRPage() {
                   </div>
                   <div className="rounded-lg border border-border bg-card p-3">
                     <div className="text-[10px] uppercase text-muted-foreground">Time Range</div>
-                    <div className="mt-1 font-semibold">{form.timeRange || "N/A"}</div>
+                    <div className="mt-1 font-semibold">{form.startTime} - {form.endTime}</div>
                   </div>
                 </div>
 
@@ -155,15 +157,27 @@ function AdminQRPage() {
                       className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Time Range</label>
-                    <input 
-                      required
-                      value={form.timeRange}
-                      onChange={e => setForm({...form, timeRange: e.target.value})}
-                      placeholder="e.g. 09:00 - 12:00"
-                      className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">Start Time</label>
+                      <input 
+                        type="time"
+                        required
+                        value={form.startTime}
+                        onChange={e => setForm({...form, startTime: e.target.value})}
+                        className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">End Time</label>
+                      <input 
+                        type="time"
+                        required
+                        value={form.endTime}
+                        onChange={e => setForm({...form, endTime: e.target.value})}
+                        className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
                   </div>
 
                   <button 
