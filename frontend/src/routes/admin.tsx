@@ -25,6 +25,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { fetchAPI } from "@/lib/api";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -42,6 +43,22 @@ const submissions = Array.from({ length: 12 }).map((_, i) => ({
 }));
 
 function AdminPage() {
+  const navigate = useNavigate();
+
+  const { data: authData, isLoading: authLoading, error: authError } = useQuery({
+    queryKey: ['authMe'],
+    queryFn: () => fetchAPI<any>('/api/auth/me'),
+    retry: false
+  });
+
+  useEffect(() => {
+    if (authError) {
+      navigate({ to: '/login' });
+    } else if (authData?.user && authData.user.role !== 'LECTURER') {
+      navigate({ to: '/dashboard' });
+    }
+  }, [authData, authError, navigate]);
+
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const today = new Date().toISOString().split('T')[0];

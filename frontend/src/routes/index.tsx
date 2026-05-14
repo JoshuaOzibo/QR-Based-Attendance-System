@@ -56,22 +56,10 @@ function LandingPage() {
               </p>
               <div className="mt-10 flex flex-wrap gap-3">
                 <Link
-                  to="/scan"
+                  to="/login"
                   className="inline-flex items-center gap-2 rounded-md bg-[image:var(--gradient-primary)] px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform hover:scale-[1.02]"
                 >
-                  <ScanLine className="size-4" /> Initialize Attendance
-                </Link>
-                <Link
-                  to="/dashboard"
-                  className="inline-flex items-center gap-2 rounded-md border border-border bg-card/50 px-5 py-3 text-sm font-semibold transition-colors hover:bg-card"
-                >
-                  Student Dashboard <ArrowRight className="size-4" />
-                </Link>
-                <Link
-                  to="/admin"
-                  className="inline-flex items-center gap-2 rounded-md px-5 py-3 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  Admin Portal
+                  <Lock className="size-4" /> Sign In to Sentinel
                 </Link>
               </div>
 
@@ -148,16 +136,10 @@ function LandingPage() {
               </div>
               <div className="flex gap-3">
                 <Link
-                  to="/scan"
+                  to="/login"
                   className="inline-flex items-center gap-2 rounded-md bg-foreground px-5 py-3 text-sm font-semibold text-background"
                 >
-                  <ScanLine className="size-4" /> Open Scanner
-                </Link>
-                <Link
-                  to="/admin"
-                  className="inline-flex items-center gap-2 rounded-md border border-border px-5 py-3 text-sm font-semibold"
-                >
-                  Admin Console
+                  <Lock className="size-4" /> Sign In
                 </Link>
               </div>
             </div>

@@ -20,6 +20,8 @@ import {
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
+import { useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -32,14 +34,31 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function StudentDashboard() {
-  const rollNo = "AIT/HND/24/00036";
-  
-  const { data, isLoading } = useQuery({
-    queryKey: ['studentAttendance', rollNo],
-    queryFn: () => fetchAPI<any>(`/api/students/${encodeURIComponent(rollNo)}/attendance`).then(res => res.data)
+  const navigate = useNavigate();
+
+  const { data: authData, isLoading: authLoading, error: authError } = useQuery({
+    queryKey: ['authMe'],
+    queryFn: () => fetchAPI<any>('/api/auth/me'),
+    retry: false
   });
 
-  if (isLoading) {
+  useEffect(() => {
+    if (authError) {
+      navigate({ to: '/login' });
+    } else if (authData?.user && authData.user.role !== 'STUDENT') {
+      navigate({ to: '/admin' });
+    }
+  }, [authData, authError, navigate]);
+
+  const rollNo = authData?.user?.universityRollNo || "";
+  
+  const { data, isLoading: dataLoading } = useQuery({
+    queryKey: ['studentAttendance', rollNo],
+    queryFn: () => fetchAPI<any>(`/api/students/${encodeURIComponent(rollNo)}/attendance`).then(res => res.data),
+    enabled: !!rollNo
+  });
+
+  if (authLoading || dataLoading || !rollNo) {
     return (
       <div className="min-h-screen">
         <SiteNav />

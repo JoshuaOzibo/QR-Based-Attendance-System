@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SubmitRouteImport } from './routes/submit'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as ScanRouteImport } from './routes/scan'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const SecurityRoute = SecurityRouteImport.update({
 const ScanRoute = ScanRouteImport.update({
   id: '/scan',
   path: '/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
   '/scan': typeof ScanRoute
   '/security': typeof SecurityRoute
   '/submit': typeof SubmitRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
   '/scan': typeof ScanRoute
   '/security': typeof SecurityRoute
   '/submit': typeof SubmitRoute
@@ -68,20 +76,36 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/dashboard': typeof DashboardRoute
+  '/login': typeof LoginRoute
   '/scan': typeof ScanRoute
   '/security': typeof SecurityRoute
   '/submit': typeof SubmitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/dashboard' | '/scan' | '/security' | '/submit'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/dashboard'
+    | '/login'
+    | '/scan'
+    | '/security'
+    | '/submit'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/dashboard' | '/scan' | '/security' | '/submit'
+  to:
+    | '/'
+    | '/admin'
+    | '/dashboard'
+    | '/login'
+    | '/scan'
+    | '/security'
+    | '/submit'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/dashboard'
+    | '/login'
     | '/scan'
     | '/security'
     | '/submit'
@@ -91,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   DashboardRoute: typeof DashboardRoute
+  LoginRoute: typeof LoginRoute
   ScanRoute: typeof ScanRoute
   SecurityRoute: typeof SecurityRoute
   SubmitRoute: typeof SubmitRoute
@@ -117,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/scan'
       fullPath: '/scan'
       preLoaderRoute: typeof ScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -147,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   DashboardRoute: DashboardRoute,
+  LoginRoute: LoginRoute,
   ScanRoute: ScanRoute,
   SecurityRoute: SecurityRoute,
   SubmitRoute: SubmitRoute,
