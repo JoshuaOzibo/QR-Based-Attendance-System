@@ -1,11 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { KpiCard } from "@/components/kpi-card";
 import {
   Bell,
   Search,
-  Play,
-  Square,
   Download,
+  Users,
+  Activity,
+  Radio,
+  ShieldCheck,
 } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query";
@@ -40,8 +43,6 @@ function AdminPage() {
     }
   }, [authData, authError, navigate]);
 
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
   const today = new Date().toISOString().split('T')[0];
 
   const { data: initialLive = [] } = useQuery({
@@ -72,17 +73,7 @@ function AdminPage() {
     return () => evtSource.close();
   }, []);
 
-  const handleGenerateQR = async () => {
-    setIsGenerating(true);
-    try {
-      const res = await fetchAPI<any>('/api/generate-qr');
-      setQrCode(`http://localhost:5000${res.qrImage}`);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+
 
   const live = liveStream.map(r => ({
     name: r.name || "Unknown",
@@ -126,33 +117,13 @@ function AdminPage() {
         </header>
 
         <main className="mx-auto max-w-7xl space-y-8 p-6 lg:p-8">
-          {/* Session control */}
-          <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl glass-strong p-6 ring-glow">
-            <div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-success">
-                ● Session Active · 11m elapsed
-              </div>
-              <h2 className="mt-1 text-2xl font-semibold tracking-tight">CS-402 Systems Architecture</h2>
-              <p className="text-sm text-muted-foreground">Hall B-12 · Spring 2026 · 60 students enrolled</p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={handleGenerateQR} disabled={isGenerating} className="inline-flex items-center gap-2 rounded-md border border-border bg-card/40 px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50">
-                <Play className="size-4" /> {isGenerating ? "Generating..." : "Generate New QR"}
-              </button>
-              <button className="inline-flex items-center gap-2 rounded-md bg-destructive/15 px-4 py-2.5 text-sm font-semibold text-destructive ring-1 ring-destructive/30 transition-colors hover:bg-destructive/25">
-                <Square className="size-4" /> End Session
-              </button>
-            </div>
+          {/* KPIs */}
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard label="Total students" value="1,482" delta="+24 this term" icon={Users} />
+            <KpiCard label="Present today" value="1,318" delta="88.9% of enrolled" icon={Activity} />
+            <KpiCard label="Active sessions" value="12" delta="across 4 faculties" deltaTone="neutral" icon={Radio} />
+            <KpiCard label="Fraud prevention" value="99.98%" delta="2 anomalies blocked" icon={ShieldCheck} />
           </div>
-          
-          {qrCode && (
-            <div className="rounded-2xl border border-border bg-card/40 p-6 flex flex-col items-center">
-              <h3 className="text-lg font-semibold mb-4">Active Session QR</h3>
-              <img src={qrCode} alt="Scan to mark attendance" className="w-64 h-64 rounded-lg bg-white p-2" />
-            </div>
-          )}
-
-
 
           {/* Live attendance feed */}
           <section className="rounded-2xl border border-border bg-card/40">
