@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { SiteNav } from "@/components/site-nav";
-import { Lock, User } from "lucide-react";
+import { Link, Lock, User } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
 
 export const Route = createFileRoute("/login")({

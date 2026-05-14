@@ -67,9 +67,9 @@ export function AdminSidebar() {
             System
           </div>
           <nav className="space-y-1">
-            <a href="#" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent/40 hover:text-foreground">
+            <Link to="/settings" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent/40 hover:text-foreground">
               <Settings className="size-4" /> Settings
-            </a>
+            </Link>
             <button 
               onClick={() => {
                 localStorage.removeItem('token');

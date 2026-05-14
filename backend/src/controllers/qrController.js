@@ -44,7 +44,7 @@ export const verifyAttendanceRedirect = (req, res) => {
             return res.status(400).send('QR code expired');
         }
 
-        res.redirect(`/index.html?sessionId=${data.sessionId}`);
+        res.redirect(`http://localhost:8080/submit?sessionId=${data.sessionId}`);
     } catch (error) {
         res.status(400).send('Invalid QR code data');
     }

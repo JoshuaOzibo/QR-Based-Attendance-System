@@ -103,3 +103,43 @@ export const getMe = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+export const updateProfile = async (req, res) => {
+    try {
+        const { name, universityRollNo, password } = req.body;
+        const user = await User.findById(req.user.userId);
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        if (name) user.name = name;
+        if (universityRollNo) {
+            if (universityRollNo !== user.universityRollNo) {
+                const existing = await User.findOne({ universityRollNo });
+                if (existing) {
+                    return res.status(400).json({ error: 'ID is already taken by another user' });
+                }
+                user.universityRollNo = universityRollNo;
+            }
+        }
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            user.passwordHash = await bcrypt.hash(password, salt);
+        }
+
+        await user.save();
+        
+        res.json({
+            message: 'Profile updated successfully',
+            user: {
+                id: user._id,
+                name: user.name,
+                role: user.role,
+                rollNo: user.universityRollNo
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

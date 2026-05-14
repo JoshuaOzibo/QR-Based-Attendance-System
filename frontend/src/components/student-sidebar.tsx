@@ -4,17 +4,19 @@ import {
   ScanLine,
   LogOut,
   ShieldHalf,
+  Info,
+  Settings
 } from "lucide-react";
 
 type NavItem = {
-  to: "/dashboard" | "/scan";
+  to: string;
   label: string;
-  icon: typeof LayoutDashboard;
+  icon: any;
   exact?: boolean;
 };
 const items: NavItem[] = [
   { to: "/dashboard", label: "My Attendance", icon: LayoutDashboard, exact: true },
-  { to: "/scan", label: "Scan QR", icon: ScanLine },
+  { to: "/about", label: "About System", icon: Info },
 ];
 
 export function StudentSidebar() {
@@ -63,6 +65,9 @@ export function StudentSidebar() {
             System
           </div>
           <nav className="space-y-1">
+            <Link to="/settings" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent/40 hover:text-foreground">
+              <Settings className="size-4" /> Settings
+            </Link>
             <button 
               onClick={() => {
                 localStorage.removeItem('token');

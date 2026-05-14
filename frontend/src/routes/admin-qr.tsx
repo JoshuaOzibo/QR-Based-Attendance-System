@@ -120,9 +120,6 @@ function AdminQRPage() {
             ) : (
               <div className="max-w-md w-full">
                 <div className="text-center mb-8">
-                  <div className="mb-6 inline-flex rounded-full bg-[image:var(--gradient-primary)] p-4 shadow-[var(--shadow-glow)]">
-                    <Play className="size-8 text-white" />
-                  </div>
                   <h2 className="text-2xl font-semibold tracking-tight">Configure New Session</h2>
                   <p className="mt-2 text-muted-foreground">Enter the details for this class session before generating the QR code.</p>
                 </div>
