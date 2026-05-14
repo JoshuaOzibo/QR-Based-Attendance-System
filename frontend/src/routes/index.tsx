@@ -1,4 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAPI } from "@/lib/api";
+import { useEffect } from "react";
 import { SiteNav } from "@/components/site-nav";
 import { SiteFooter } from "@/components/site-footer";
 import { LiveQrCard } from "@/components/live-qr-card";
@@ -28,6 +31,24 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
+  const navigate = useNavigate();
+
+  const { data: authData } = useQuery({
+    queryKey: ['authMe'],
+    queryFn: () => fetchAPI<any>('/api/auth/me'),
+    retry: false
+  });
+
+  useEffect(() => {
+    if (authData?.user) {
+      if (authData.user.role === 'LECTURER') {
+        navigate({ to: '/admin' });
+      } else {
+        navigate({ to: '/dashboard' });
+      }
+    }
+  }, [authData, navigate]);
+
   return (
     <div className="min-h-screen">
       <SiteNav />
