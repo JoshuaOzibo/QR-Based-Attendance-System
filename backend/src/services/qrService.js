@@ -12,22 +12,15 @@ cloudinary.config({
 });
 
 const QR_CODE_VALIDITY = 1.5 * 60 * 1000; // 1.5 minutes in ms
-const CACHE_TIME = 90000;
 
 export const activeSessions = new Map();
-const ipCache = new Map();
 
-export async function generateQRCode(ipAddress, sessionMetadata = {}) {
-    if (ipCache.has(ipAddress)) {
-        const cached = ipCache.get(ipAddress);
-        if (Date.now() - cached.timestamp < CACHE_TIME) {
-            return cached.data;
-        }
-    }
+export async function generateQRCode(ipAddress, sessionMetadata = {}, expiresAt) {
 
     try {
         const sessionId = crypto.randomBytes(16).toString('hex');
         const timestamp = Date.now();
+        const expiration = expiresAt || (timestamp + QR_CODE_VALIDITY);
         
         const secretKey = env.QR_SECRET_KEY;
         const hash = crypto.createHash('sha256')
@@ -65,24 +58,20 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}) {
 
         activeSessions.set(sessionId, {
             ip: ipAddress,
-            expiresAt: timestamp + QR_CODE_VALIDITY,
+            expiresAt: expiration,
             ...sessionMetadata
         });
 
         setTimeout(() => {
             activeSessions.delete(sessionId);
-        }, QR_CODE_VALIDITY);
+        }, expiration - timestamp);
 
         const result = {
             qrImage: qrImageUrl,
             sessionId,
-            expiresIn: QR_CODE_VALIDITY
+            expiresIn: expiration - timestamp,
+            expiresAt: expiration
         };
-
-        ipCache.set(ipAddress, {
-            data: result,
-            timestamp: Date.now()
-        });
 
         return result;
     } catch (error) {

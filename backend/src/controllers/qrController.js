@@ -1,16 +1,46 @@
-import { generateQRCode, validateSession } from '../services/qrService.js';
+import { generateQRCode, validateSession, activeSessions } from '../services/qrService.js';
 import { consistentHashJS, sha256 } from '../utils/hash.js';
 import { env } from '../config/env.js';
 
 export const generateQR = async (req, res) => {
     try {
-        const { courseTitle, hall, lecturerName, timeRange } = req.body;
-        const sessionMetadata = { courseTitle, hall, lecturerName, timeRange };
-        const qrData = await generateQRCode(req.ip, sessionMetadata);
+        const { courseTitle, hall, lecturerName, date, startTime, endTime } = req.body;
+        
+        // Parse date and endTime to create exact Unix timestamp
+        const expiryDate = new Date(`${date}T${endTime}`);
+        let expiresAt = expiryDate.getTime();
+        
+        if (isNaN(expiresAt) || expiresAt <= Date.now()) {
+            return res.status(400).json({ status: "error", message: "End time must be in the future." });
+        }
+
+        const sessionMetadata = { courseTitle, hall, lecturerName, date, startTime, endTime, lecturerId: req.user.userId };
+        const qrData = await generateQRCode(req.ip, sessionMetadata, expiresAt);
         res.json({ status: "success", ...qrData });
     } catch (error) {
         res.status(500).json({ status: "error", message: "Failed to generate QR code" });
     }
+};
+
+export const getActiveSession = (req, res) => {
+    const userId = req.user.userId;
+    for (const [sessionId, session] of activeSessions.entries()) {
+        if (session.lecturerId === userId && session.expiresAt > Date.now()) {
+            return res.json({ status: "success", hasSession: true, session: { sessionId, ...session } });
+        }
+    }
+    return res.json({ status: "success", hasSession: false });
+};
+
+export const endSession = (req, res) => {
+    const userId = req.user.userId;
+    for (const [sessionId, session] of activeSessions.entries()) {
+        if (session.lecturerId === userId) {
+            activeSessions.delete(sessionId);
+            return res.json({ status: "success", message: "Session ended" });
+        }
+    }
+    return res.json({ status: "success", message: "No active session found" });
 };
 
 export const validateQRSession = async (req, res) => {

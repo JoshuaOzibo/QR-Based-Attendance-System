@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
 import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin-qr")({
   head: () => ({
@@ -32,11 +33,15 @@ function AdminQRPage() {
 
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>("");
 
   const [form, setForm] = useState({
     courseTitle: "",
     hall: "",
     lecturerName: "",
+    date: new Date().toISOString().split('T')[0],
     startTime: "",
     endTime: ""
   });
@@ -50,20 +55,77 @@ function AdminQRPage() {
     }
   }, [authData]);
 
+  // Fetch active session on mount
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const res = await fetchAPI<any>('/api/active-session');
+        if (res.hasSession && res.session) {
+          const s = res.session;
+          setForm({
+            courseTitle: s.courseTitle || "",
+            hall: s.hall || "",
+            lecturerName: s.lecturerName || "",
+            date: s.date || new Date().toISOString().split('T')[0],
+            startTime: s.startTime || "",
+            endTime: s.endTime || ""
+          });
+          setQrCode(s.qrImage || null);
+          setActiveSessionId(s.sessionId);
+          setExpiresAt(s.expiresAt);
+        }
+      } catch (err) {}
+    };
+    if (authData?.user?.role === 'LECTURER') {
+      fetchSession();
+    }
+  }, [authData]);
+
+  // Timer countdown
+  useEffect(() => {
+    if (!expiresAt) return;
+    const interval = setInterval(() => {
+      const diff = expiresAt - Date.now();
+      if (diff <= 0) {
+        clearInterval(interval);
+        handleEndSession();
+        toast.warning("Session expired automatically.");
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      if (h > 0) setTimeLeft(`${h}h ${m}m ${s}s`);
+      else setTimeLeft(`${m}m ${s}s`);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt]);
+
+  const handleEndSession = async () => {
+    try {
+      await fetchAPI('/api/end-session', { method: 'DELETE' });
+    } catch(err) {}
+    setQrCode(null);
+    setActiveSessionId(null);
+    setExpiresAt(null);
+    setTimeLeft("");
+  };
+
   const handleGenerateQR = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setIsGenerating(true);
     try {
       const res = await fetchAPI<any>("/api/generate-qr", { 
         method: "POST",
-        body: JSON.stringify({
-          ...form,
-          timeRange: `${form.startTime} - ${form.endTime}`
-        })
+        body: JSON.stringify(form)
       });
       setQrCode(res.qrImage);
-    } catch (error) {
+      setActiveSessionId(res.sessionId);
+      setExpiresAt(res.expiresAt);
+      toast.success("Session started successfully!");
+    } catch (error: any) {
       console.error("Failed to generate QR:", error);
+      toast.error(error.message || "Failed to start session.");
     } finally {
       setIsGenerating(false);
     }
@@ -90,8 +152,12 @@ function AdminQRPage() {
           <div className="rounded-2xl border border-border bg-card/40 p-6 sm:p-10 flex flex-col items-center justify-center min-h-[500px]">
             {qrCode ? (
               <div className="text-center w-full flex flex-col items-center">
-                <div className="mb-6 text-[14px] font-bold uppercase tracking-[0.2em] text-success">
-                  ● Session Active · {form.courseTitle}
+                <div className="mb-6 text-[14px] font-bold uppercase tracking-[0.2em] text-success flex items-center justify-center gap-2">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-success"></span>
+                  </span>
+                  Session Active · {form.courseTitle}
                 </div>
                 <h2 className="mb-8 text-3xl font-semibold tracking-tight">Scan to mark attendance</h2>
                 
@@ -101,8 +167,8 @@ function AdminQRPage() {
                     <div className="mt-1 font-semibold">{form.hall || "N/A"}</div>
                   </div>
                   <div className="rounded-lg border border-border bg-card p-3">
-                    <div className="text-[10px] uppercase text-muted-foreground">Time Range</div>
-                    <div className="mt-1 font-semibold">{form.startTime} - {form.endTime}</div>
+                    <div className="text-[10px] uppercase text-muted-foreground">Time Remaining</div>
+                    <div className="mt-1 font-semibold text-primary font-mono">{timeLeft || "Computing..."}</div>
                   </div>
                 </div>
 
@@ -114,7 +180,7 @@ function AdminQRPage() {
                   <button onClick={() => handleGenerateQR()} disabled={isGenerating} className="inline-flex items-center gap-2 rounded-md border border-border bg-card/80 px-6 py-3 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50">
                     <Play className="size-4" /> {isGenerating ? "Regenerating..." : "Regenerate QR"}
                   </button>
-                  <button onClick={() => setQrCode(null)} className="inline-flex items-center gap-2 rounded-md bg-destructive/15 px-6 py-3 text-sm font-semibold text-destructive ring-1 ring-destructive/30 transition-colors hover:bg-destructive/25">
+                  <button onClick={handleEndSession} className="inline-flex items-center gap-2 rounded-md bg-destructive/15 px-6 py-3 text-sm font-semibold text-destructive ring-1 ring-destructive/30 transition-colors hover:bg-destructive/25">
                     <Square className="size-4" /> End Session
                   </button>
                 </div>
@@ -137,15 +203,27 @@ function AdminQRPage() {
                       className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Hall</label>
-                    <input 
-                      required
-                      value={form.hall}
-                      onChange={e => setForm({...form, hall: e.target.value})}
-                      placeholder="e.g. auditorium"
-                      className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">Hall</label>
+                      <input 
+                        required
+                        value={form.hall}
+                        onChange={e => setForm({...form, hall: e.target.value})}
+                        placeholder="e.g. auditorium"
+                        className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-1.5">Date</label>
+                      <input 
+                        type="date"
+                        required
+                        value={form.date}
+                        onChange={e => setForm({...form, date: e.target.value})}
+                        className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-muted-foreground mb-1.5">Name of Lecturer</label>
