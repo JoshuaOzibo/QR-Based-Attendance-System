@@ -22,7 +22,7 @@ if (!fs.existsSync(QR_CODE_DIR)) {
     fs.mkdirSync(QR_CODE_DIR, { recursive: true });
 }
 
-export async function generateQRCode(ipAddress) {
+export async function generateQRCode(ipAddress, sessionMetadata = {}) {
     if (ipCache.has(ipAddress)) {
         const cached = ipCache.get(ipAddress);
         if (Date.now() - cached.timestamp < CACHE_TIME) {
@@ -56,7 +56,8 @@ export async function generateQRCode(ipAddress) {
         // TODO: Replace with Redis Set operation
         activeSessions.set(sessionId, {
             ip: ipAddress,
-            expiresAt: timestamp + QR_CODE_VALIDITY
+            expiresAt: timestamp + QR_CODE_VALIDITY,
+            ...sessionMetadata
         });
 
         setTimeout(() => {

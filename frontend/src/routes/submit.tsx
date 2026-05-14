@@ -1,10 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { SiteNav } from "@/components/site-nav";
 import { MapPin, ShieldCheck, CheckCircle2, Loader2, ArrowRight } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/submit")({
   head: () => ({
@@ -18,28 +19,51 @@ export const Route = createFileRoute("/submit")({
 
 const Schema = z.object({
   fullName: z.string().trim().min(2, "Enter your full name").max(80),
-  rollNumber: z.string().trim().min(3, "University roll required").max(40),
-  section: z.string().trim().min(1, "Section required").max(10),
-  classRoll: z.string().trim().min(1, "Class roll required").max(10),
+  matricNumber: z.string().trim().min(3, "Matric number required").max(40),
 });
 
 type FormState = z.infer<typeof Schema>;
 
 function SubmitPage() {
-  const [form, setForm] = useState<FormState>({ fullName: "", rollNumber: "AIT/HND/24/00036", section: "", classRoll: "" });
+  const navigate = useNavigate();
+
+  const { data: authData, isLoading: authLoading, error: authError } = useQuery({
+    queryKey: ['authMe'],
+    queryFn: () => fetchAPI<any>('/api/auth/me'),
+    retry: false
+  });
+
+  useEffect(() => {
+    if (authError) {
+      navigate({ to: '/login' });
+    } else if (authData?.user && authData.user.role !== 'STUDENT') {
+      navigate({ to: '/admin' });
+    }
+  }, [authData, authError, navigate]);
+
+  const [form, setForm] = useState<FormState>({ fullName: "", matricNumber: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
 
+  useEffect(() => {
+    if (authData?.user) {
+      setForm({
+        fullName: authData.user.name || "",
+        matricNumber: authData.user.universityRollNo || ""
+      });
+    }
+  }, [authData]);
+
   // Auto fetch location on mount
-  useState(() => {
+  useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
         (err) => console.warn("Geolocation blocked:", err)
       );
     }
-  });
+  }, []);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,13 +83,11 @@ function SubmitPage() {
     // Fallback coordinates if location is denied (for testing purposes, usually we enforce this)
     const loc = location || { lat: 30.2679634, lng: 77.991887 };
     
-    fetchAPI('/mark-attendance', {
+    fetchAPI('/api/attendance/mark', {
       method: 'POST',
       body: JSON.stringify({
         name: form.fullName,
-        universityRollNo: form.rollNumber,
-        section: form.section,
-        classRollNo: form.classRoll,
+        universityRollNo: form.matricNumber, // Map Matric Number to backend expectations
         deviceFingerprint: navigator.userAgent, // Basic fingerprinting
         location: loc
       })
@@ -79,6 +101,10 @@ function SubmitPage() {
       toast.error("Failed to mark attendance", { description: err.message });
     });
   };
+
+  if (authLoading || (authData?.user && authData.user.role !== 'STUDENT')) {
+    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
+  }
 
   if (status === "success") {
     return (
@@ -94,11 +120,11 @@ function SubmitPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Attendance Marked Successfully</h1>
           <p className="mt-3 text-muted-foreground">
             Your verified entry has been added to the ledger for{" "}
-            <span className="text-foreground">CS-402 · Hall B-12</span>.
+            <span className="text-foreground">the active session</span>.
           </p>
           <div className="mt-8 grid w-full grid-cols-3 gap-3 text-left">
-            <Tile label="Session" value="#SEC-8829-01" />
-            <Tile label="Time" value="10:14 AM" />
+            <Tile label="Session" value="Verified" />
+            <Tile label="Time" value={new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} />
             <Tile label="GPS" value="±8m" />
           </div>
           <Link
@@ -132,31 +158,13 @@ function SubmitPage() {
               placeholder="Marcus Holloway"
             />
             <Field
-              label="University Roll Number"
-              value={form.rollNumber}
-              onChange={(v) => setForm({ ...form, rollNumber: v })}
-              error={errors.rollNumber}
-              placeholder="CS2024-042"
+              label="Matric Number"
+              value={form.matricNumber}
+              onChange={(v) => setForm({ ...form, matricNumber: v })}
+              error={errors.matricNumber}
+              placeholder="e.g., AIT/HND/24/00036"
               mono
             />
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field
-                label="Section"
-                value={form.section}
-                onChange={(v) => setForm({ ...form, section: v.toUpperCase() })}
-                error={errors.section}
-                placeholder="A"
-                mono
-              />
-              <Field
-                label="Class Roll"
-                value={form.classRoll}
-                onChange={(v) => setForm({ ...form, classRoll: v })}
-                error={errors.classRoll}
-                placeholder="14"
-                mono
-              />
-            </div>
 
             <button
               type="submit"
@@ -183,14 +191,13 @@ function SubmitPage() {
               </span>
               <ShieldCheck className="size-4 text-success" />
             </div>
-            <div className="text-sm font-medium">CS-402 Systems Architecture</div>
-            <div className="mt-1 text-xs text-muted-foreground">Session #SEC-8829-01 · Active 84s</div>
+            <div className="text-sm font-medium">Session Active</div>
+            <div className="mt-1 text-xs text-muted-foreground">Live verification running</div>
 
             <div className="mt-6 space-y-3 text-sm">
-              <RowK k="Classroom" v="Hall B-12" />
-              <RowK k="Faculty" v="Dr. Aris Thorne" />
-              <RowK k="Started" v="10:00 AM" />
-              <RowK k="Scanned" v="42 / 60" />
+              <RowK k="Method" v="Dynamic QR" />
+              <RowK k="Timestamp" v={new Date().toLocaleTimeString()} />
+              <RowK k="User" v={authData?.user?.name || "Authenticating..."} />
             </div>
           </div>
 

@@ -33,11 +33,33 @@ function AdminQRPage() {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleGenerateQR = async () => {
+  const [form, setForm] = useState({
+    courseTitle: "",
+    hall: "",
+    lecturerName: "",
+    timeRange: ""
+  });
+
+  useEffect(() => {
+    if (authData?.user) {
+      setForm(prev => ({
+        ...prev,
+        lecturerName: authData.user.name || ""
+      }));
+    }
+  }, [authData]);
+
+  const handleGenerateQR = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsGenerating(true);
     try {
-      const res = await fetchAPI<any>("/api/attendance/generate-qr", { method: "POST" });
-      setQrCode(res.qrCode);
+      const res = await fetchAPI<any>("/api/generate-qr", { 
+        method: "POST",
+        body: JSON.stringify(form)
+      });
+      // The API currently returns qrImage which is a path, let's format it.
+      // We had setQrCode(`http://localhost:5000${res.qrImage}`); in admin.tsx before.
+      setQrCode(`http://localhost:5000${res.qrImage}`);
     } catch (error) {
       console.error("Failed to generate QR:", error);
     } finally {
@@ -63,37 +85,99 @@ function AdminQRPage() {
             </div>
           </header>
 
-          <div className="rounded-2xl border border-border bg-card/40 p-6 sm:p-10 text-center flex flex-col items-center justify-center min-h-[500px]">
+          <div className="rounded-2xl border border-border bg-card/40 p-6 sm:p-10 flex flex-col items-center justify-center min-h-[500px]">
             {qrCode ? (
-              <>
+              <div className="text-center w-full flex flex-col items-center">
                 <div className="mb-6 text-[14px] font-bold uppercase tracking-[0.2em] text-success">
-                  ● Session Active · 11m elapsed
+                  ● Session Active · {form.courseTitle}
                 </div>
                 <h2 className="mb-8 text-3xl font-semibold tracking-tight">Scan to mark attendance</h2>
-                <div className="rounded-2xl border border-border bg-white p-4 shadow-[var(--shadow-glow)]">
+                
+                <div className="mb-8 grid grid-cols-2 gap-4 text-left max-w-md w-full">
+                  <div className="rounded-lg border border-border bg-card p-3">
+                    <div className="text-[10px] uppercase text-muted-foreground">Hall</div>
+                    <div className="mt-1 font-semibold">{form.hall || "N/A"}</div>
+                  </div>
+                  <div className="rounded-lg border border-border bg-card p-3">
+                    <div className="text-[10px] uppercase text-muted-foreground">Time Range</div>
+                    <div className="mt-1 font-semibold">{form.timeRange || "N/A"}</div>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-border bg-white p-4 shadow-[var(--shadow-glow)] inline-block">
                   <img src={qrCode} alt="Scan to mark attendance" className="w-[400px] h-[400px]" />
                 </div>
                 
-                <div className="mt-10 flex gap-4">
-                  <button onClick={handleGenerateQR} disabled={isGenerating} className="inline-flex items-center gap-2 rounded-md border border-border bg-card/80 px-6 py-3 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50">
+                <div className="mt-10 flex justify-center gap-4">
+                  <button onClick={() => handleGenerateQR()} disabled={isGenerating} className="inline-flex items-center gap-2 rounded-md border border-border bg-card/80 px-6 py-3 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50">
                     <Play className="size-4" /> {isGenerating ? "Regenerating..." : "Regenerate QR"}
                   </button>
                   <button onClick={() => setQrCode(null)} className="inline-flex items-center gap-2 rounded-md bg-destructive/15 px-6 py-3 text-sm font-semibold text-destructive ring-1 ring-destructive/30 transition-colors hover:bg-destructive/25">
                     <Square className="size-4" /> End Session
                   </button>
                 </div>
-              </>
+              </div>
             ) : (
-              <>
-                <div className="mb-6 rounded-full bg-[image:var(--gradient-primary)] p-4 shadow-[var(--shadow-glow)]">
-                  <Play className="size-8 text-white" />
+              <div className="max-w-md w-full">
+                <div className="text-center mb-8">
+                  <div className="mb-6 inline-flex rounded-full bg-[image:var(--gradient-primary)] p-4 shadow-[var(--shadow-glow)]">
+                    <Play className="size-8 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-semibold tracking-tight">Configure New Session</h2>
+                  <p className="mt-2 text-muted-foreground">Enter the details for this class session before generating the QR code.</p>
                 </div>
-                <h2 className="mb-2 text-2xl font-semibold tracking-tight">No Active Session</h2>
-                <p className="mb-8 text-muted-foreground">Generate a QR code to start accepting live attendance.</p>
-                <button onClick={handleGenerateQR} disabled={isGenerating} className="inline-flex items-center gap-2 rounded-md bg-[image:var(--gradient-primary)] px-8 py-4 text-base font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform hover:scale-[1.02] disabled:opacity-50">
-                  <Play className="size-5" /> {isGenerating ? "Generating..." : "Start New Session"}
-                </button>
-              </>
+
+                <form onSubmit={handleGenerateQR} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Course Title</label>
+                    <input 
+                      required
+                      value={form.courseTitle}
+                      onChange={e => setForm({...form, courseTitle: e.target.value})}
+                      placeholder="e.g. Web Development"
+                      className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Hall</label>
+                    <input 
+                      required
+                      value={form.hall}
+                      onChange={e => setForm({...form, hall: e.target.value})}
+                      placeholder="e.g. auditorium"
+                      className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Name of Lecturer</label>
+                    <input 
+                      required
+                      value={form.lecturerName}
+                      onChange={e => setForm({...form, lecturerName: e.target.value})}
+                      placeholder="e.g. Dr. Steve"
+                      className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Time Range</label>
+                    <input 
+                      required
+                      value={form.timeRange}
+                      onChange={e => setForm({...form, timeRange: e.target.value})}
+                      placeholder="e.g. 09:00 - 12:00"
+                      className="w-full rounded-md border border-border bg-card px-4 py-2 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={isGenerating} 
+                    className="mt-6 w-full inline-flex justify-center items-center gap-2 rounded-md bg-[image:var(--gradient-primary)] px-8 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform hover:scale-[1.02] disabled:opacity-50"
+                  >
+                    <Play className="size-4" /> {isGenerating ? "Generating..." : "Start Session & Generate QR"}
+                  </button>
+                </form>
+              </div>
             )}
           </div>
         </main>

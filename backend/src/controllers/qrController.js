@@ -4,7 +4,9 @@ import { env } from '../config/env.js';
 
 export const generateQR = async (req, res) => {
     try {
-        const qrData = await generateQRCode(req.ip);
+        const { courseTitle, hall, lecturerName, timeRange } = req.body;
+        const sessionMetadata = { courseTitle, hall, lecturerName, timeRange };
+        const qrData = await generateQRCode(req.ip, sessionMetadata);
         res.json({ status: "success", ...qrData });
     } catch (error) {
         res.status(500).json({ status: "error", message: "Failed to generate QR code" });

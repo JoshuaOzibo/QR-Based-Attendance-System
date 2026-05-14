@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   ScanLine,
@@ -23,6 +23,7 @@ const items: NavItem[] = [
 
 export function AdminSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
 
   return (
     <aside className="hidden w-64 shrink-0 border-r border-sidebar-border bg-sidebar/60 backdrop-blur-xl lg:flex lg:flex-col">
@@ -72,7 +73,7 @@ export function AdminSidebar() {
             <button 
               onClick={() => {
                 localStorage.removeItem('token');
-                window.location.href = '/login';
+                navigate({ to: '/login' });
               }}
               className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 hover:text-red-600"
             >

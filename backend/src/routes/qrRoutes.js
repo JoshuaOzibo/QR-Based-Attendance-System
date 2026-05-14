@@ -5,7 +5,7 @@ import { qrLimiter } from '../middleware/rateLimiter.js';
 const router = Router();
 
 // Mounted at /api
-router.get('/generate-qr', qrLimiter, generateQR);
+router.post('/generate-qr', qrLimiter, generateQR);
 router.post('/validate-session', validateQRSession);
 router.post('/consistent-hash', consistentHash);
 

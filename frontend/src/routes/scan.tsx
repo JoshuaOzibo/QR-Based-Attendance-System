@@ -1,7 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { SiteNav } from "@/components/site-nav";
 import { LiveQrCard } from "@/components/live-qr-card";
 import { ShieldCheck, MapPin, Radio, ArrowRight, Camera } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchAPI } from "@/lib/api";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/scan")({
   head: () => ({
@@ -18,6 +21,26 @@ export const Route = createFileRoute("/scan")({
 });
 
 function ScanPage() {
+  const navigate = useNavigate();
+
+  const { data: authData, isLoading: authLoading, error: authError } = useQuery({
+    queryKey: ['authMe'],
+    queryFn: () => fetchAPI<any>('/api/auth/me'),
+    retry: false
+  });
+
+  useEffect(() => {
+    if (authError) {
+      navigate({ to: '/login' });
+    } else if (authData?.user && authData.user.role !== 'STUDENT') {
+      navigate({ to: '/admin' });
+    }
+  }, [authData, authError, navigate]);
+
+  if (authLoading || (authData?.user && authData.user.role !== 'STUDENT')) {
+    return <div className="min-h-screen flex items-center justify-center">Loading scanner...</div>;
+  }
+
   return (
     <div className="min-h-screen">
       <SiteNav />
