@@ -1,26 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AdminSidebar } from "@/components/admin-sidebar";
-import { KpiCard } from "@/components/kpi-card";
 import {
   Bell,
   Search,
   Play,
   Square,
   Download,
-  Users,
-  Activity,
-  Radio,
-  ShieldCheck,
 } from "lucide-react";
-import {
-  BarChart,
-  Bar,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -36,11 +22,6 @@ export const Route = createFileRoute("/admin")({
   }),
   component: AdminPage,
 });
-
-const submissions = Array.from({ length: 12 }).map((_, i) => ({
-  hour: `${9 + i}:00`,
-  count: 30 + Math.round(Math.random() * 90),
-}));
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -171,77 +152,7 @@ function AdminPage() {
             </div>
           )}
 
-          {/* KPIs */}
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard label="Total students" value="1,482" delta="+24 this term" icon={Users} />
-            <KpiCard label="Present today" value="1,318" delta="88.9% of enrolled" icon={Activity} />
-            <KpiCard label="Active sessions" value="12" delta="across 4 faculties" deltaTone="neutral" icon={Radio} />
-            <KpiCard label="Fraud prevention" value="99.98%" delta="2 anomalies blocked" icon={ShieldCheck} />
-          </div>
 
-          {/* Chart + completion */}
-          <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-            <div className="rounded-2xl border border-border bg-card/40 p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-semibold">Submissions today</h3>
-                  <p className="text-xs text-muted-foreground">Per hour, all sessions</p>
-                </div>
-                <div className="text-xs text-success">Peak 11:00 · 124 scans</div>
-              </div>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={submissions}>
-                    <defs>
-                      <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="oklch(0.72 0.18 265)" />
-                        <stop offset="100%" stopColor="oklch(0.55 0.22 265)" />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
-                    <XAxis dataKey="hour" stroke="oklch(0.7 0.02 260)" fontSize={11} tickLine={false} axisLine={false} />
-                    <YAxis stroke="oklch(0.7 0.02 260)" fontSize={11} tickLine={false} axisLine={false} />
-                    <Tooltip
-                      cursor={{ fill: "oklch(1 0 0 / 0.04)" }}
-                      contentStyle={{
-                        background: "oklch(0.22 0.025 265)",
-                        border: "1px solid oklch(1 0 0 / 0.1)",
-                        borderRadius: 8,
-                        fontSize: 12,
-                      }}
-                    />
-                    <Bar dataKey="count" fill="url(#bg)" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card/40 p-6">
-              <h3 className="text-base font-semibold">Completion by section</h3>
-              <p className="text-xs text-muted-foreground">CS-402 · live</p>
-              <div className="mt-6 space-y-5">
-                {[
-                  { s: "Section A", v: 92 },
-                  { s: "Section B", v: 78 },
-                  { s: "Section C", v: 84 },
-                  { s: "Section D", v: 61 },
-                ].map((row) => (
-                  <div key={row.s}>
-                    <div className="mb-1.5 flex items-center justify-between text-xs">
-                      <span className="font-medium">{row.s}</span>
-                      <span className="font-mono text-muted-foreground">{row.v}%</span>
-                    </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-border/60">
-                      <div
-                        className="h-full rounded-full bg-[image:var(--gradient-primary)]"
-                        style={{ width: `${row.v}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
           {/* Live attendance feed */}
           <section className="rounded-2xl border border-border bg-card/40">

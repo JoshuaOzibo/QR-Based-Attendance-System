@@ -13,26 +13,9 @@ export function SiteNav() {
             Sentinel<span className="text-primary">.edu</span>
           </span>
         </Link>
-        <div className="hidden items-center gap-7 md:flex">
-          <Link to="/scan" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-            Scan QR
-          </Link>
-          <Link to="/dashboard" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-            Student
-          </Link>
-          <Link to="/admin" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-            Admin
-          </Link>
-          <Link to="/security" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground" activeProps={{ className: "text-foreground" }}>
-            Security
-          </Link>
-        </div>
         <div className="flex items-center gap-2">
-          <Link to="/scan" className="hidden rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline-flex">
+          <Link to="/scan" className="rounded-md bg-[image:var(--gradient-primary)] px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform hover:scale-[1.02]">
             Open Scanner
-          </Link>
-          <Link to="/admin" className="rounded-md bg-foreground px-3.5 py-1.5 text-sm font-semibold text-background ring-1 ring-foreground/10 transition-transform hover:scale-[1.02]">
-            Admin Portal
           </Link>
         </div>
       </div>

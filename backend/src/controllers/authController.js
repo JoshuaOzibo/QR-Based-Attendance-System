@@ -5,6 +5,54 @@ import { env } from '../config/env.js';
 
 const JWT_SECRET = env.JWT_SECRET || 'fallback_secret_for_development';
 
+export const register = async (req, res) => {
+    try {
+        const { name, universityRollNo, password, role } = req.body;
+
+        if (!name || !universityRollNo || !password || !role) {
+            return res.status(400).json({ error: 'Please provide all required fields' });
+        }
+
+        if (!['STUDENT', 'LECTURER'].includes(role)) {
+            return res.status(400).json({ error: 'Invalid role specified' });
+        }
+
+        const existingUser = await User.findOne({ universityRollNo });
+        if (existingUser) {
+            return res.status(400).json({ error: 'User with this ID already exists' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        const user = await User.create({
+            name,
+            universityRollNo,
+            passwordHash,
+            role,
+        });
+
+        const token = jwt.sign(
+            { userId: user._id, role: user.role, rollNo: user.universityRollNo },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({
+            message: 'Registered successfully',
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                role: user.role,
+                rollNo: user.universityRollNo
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 export const login = async (req, res) => {
     try {
         const { universityRollNo, password } = req.body;

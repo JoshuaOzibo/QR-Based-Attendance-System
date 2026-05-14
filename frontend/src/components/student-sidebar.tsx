@@ -2,26 +2,22 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   ScanLine,
-  Users,
-  ShieldCheck,
-  BarChart3,
-  Settings,
-  ShieldHalf,
   LogOut,
+  ShieldHalf,
 } from "lucide-react";
 
 type NavItem = {
-  to: string;
+  to: "/dashboard" | "/scan";
   label: string;
-  icon: any;
+  icon: typeof LayoutDashboard;
   exact?: boolean;
 };
 const items: NavItem[] = [
-  { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/admin-qr", label: "Generate QR", icon: ScanLine },
+  { to: "/dashboard", label: "My Attendance", icon: LayoutDashboard, exact: true },
+  { to: "/scan", label: "Scan QR", icon: ScanLine },
 ];
 
-export function AdminSidebar() {
+export function StudentSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
 
   return (
@@ -66,9 +62,6 @@ export function AdminSidebar() {
             System
           </div>
           <nav className="space-y-1">
-            <a href="#" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-sidebar-accent/40 hover:text-foreground">
-              <Settings className="size-4" /> Settings
-            </a>
             <button 
               onClick={() => {
                 localStorage.removeItem('token');
@@ -85,10 +78,10 @@ export function AdminSidebar() {
       <div className="m-3 rounded-xl border border-border bg-card/50 p-4">
         <div className="mb-2 flex items-center gap-2 text-xs font-medium">
           <span className="size-2 animate-pulse rounded-full bg-success" />
-          All systems nominal
+          Student Mode
         </div>
         <p className="text-[11px] text-muted-foreground">
-          Sessions encrypted with rolling AES-256 keys.
+          Your attendance records are securely verified by rolling cryptographic tokens.
         </p>
       </div>
     </aside>
