@@ -43,23 +43,17 @@ function AuthPage() {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* ── Left branding panel (desktop only) ────────────────────────────── */}
       <div className="hidden lg:flex lg:w-[52%] flex-col justify-between relative overflow-hidden bg-[#080810] px-16 py-14">
-        {/* Gradient blobs */}
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute -top-32 -left-32 size-[500px] rounded-full bg-primary/20 blur-[120px]" />
           <div className="absolute bottom-0 right-0 size-[400px] rounded-full bg-violet-600/15 blur-[100px]" />
         </div>
-
-        {/* Logo */}
         <div className="relative flex items-center gap-3">
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30">
             <ShieldCheck className="size-5 text-primary" />
           </div>
           <span className="text-lg font-bold tracking-tight text-white">Sentinel<span className="text-primary">.edu</span></span>
         </div>
-
-        {/* Center content */}
         <div className="relative space-y-8">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary mb-4">Attendance Intelligence</div>
@@ -67,11 +61,9 @@ function AuthPage() {
               Secure. Verified.<br />Real-time.
             </h2>
             <p className="mt-4 text-base text-white/50 leading-relaxed max-w-sm">
-              QR-based attendance with GPS verification and live fraud detection — built for modern institutions.
+              QR-based attendance with GPS verification and live fraud detection built for modern institutions.
             </p>
           </div>
-
-          {/* Feature cards */}
           <div className="space-y-3">
             {[
               { icon: Zap,        label: "Instant QR generation",         sub: "Generate session codes in seconds" },
@@ -90,16 +82,11 @@ function AuthPage() {
             ))}
           </div>
         </div>
-
-        {/* Footer note */}
         <div className="relative text-xs text-white/25">
           © {new Date().getFullYear()} Sentinel.edu · All rights reserved
         </div>
       </div>
-
-      {/* ── Right form panel ───────────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-16">
-        {/* Mobile logo */}
         <div className="mb-8 flex items-center gap-2 lg:hidden">
           <ShieldCheck className="size-6 text-primary" />
           <span className="text-lg font-bold">Sentinel<span className="text-primary">.edu</span></span>
@@ -114,10 +101,6 @@ function AuthPage() {
     </div>
   );
 }
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*  Sign In Form                                                               */
-/* ─────────────────────────────────────────────────────────────────────────── */
 function SignInForm({ onSwitch, onSuccess }: { onSwitch: (t: Tab) => void; onSuccess: any }) {
   const [rollNo, setRollNo]       = useState("");
   const [password, setPassword]   = useState("");
@@ -162,7 +145,7 @@ function SignInForm({ onSwitch, onSuccess }: { onSwitch: (t: Tab) => void; onSuc
           icon={<User className="size-4" />}
           value={rollNo}
           onChange={setRollNo}
-          placeholder="e.g. AIT/HND/24/00036"
+          placeholder="e.g. SWD/HND/24/00001"
           autoComplete="username"
         />
 
@@ -189,9 +172,6 @@ function SignInForm({ onSwitch, onSuccess }: { onSwitch: (t: Tab) => void; onSuc
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────── */
-/*  Sign Up Form                                                               */
-/* ─────────────────────────────────────────────────────────────────────────── */
 function SignUpForm({ onSwitch, onSuccess }: { onSwitch: (t: Tab) => void; onSuccess: any }) {
   const [role, setRole]           = useState<"STUDENT" | "LECTURER">("STUDENT");
   const [name, setName]           = useState("");
@@ -238,7 +218,6 @@ function SignUpForm({ onSwitch, onSuccess }: { onSwitch: (t: Tab) => void; onSuc
         <p className="mt-2 text-sm text-muted-foreground">Join Sentinel.edu in seconds</p>
       </div>
 
-      {/* Role selector */}
       <div className="mb-5 flex rounded-xl bg-card/50 p-1 ring-1 ring-border">
         {(["STUDENT", "LECTURER"] as const).map(r => (
           <button
@@ -264,15 +243,15 @@ function SignUpForm({ onSwitch, onSuccess }: { onSwitch: (t: Tab) => void; onSuc
           icon={<User className="size-4" />}
           value={name}
           onChange={setName}
-          placeholder={role === "STUDENT" ? "Joshua Ozibo" : "Dr. Aris Thorne"}
+          placeholder={role === "STUDENT" ? "Enter your Full name" : "Enter your Full name"}
           autoComplete="name"
         />
         <Field
-          label={role === "STUDENT" ? "University Roll No" : "Lecturer ID"}
+          label={role === "STUDENT" ? "Student Matric Number" : "Lecturer ID"}
           icon={<Mail className="size-4" />}
           value={rollNo}
           onChange={setRollNo}
-          placeholder={role === "STUDENT" ? "e.g. AIT/HND/24/00036" : "e.g. FAC-2026"}
+          placeholder={role === "STUDENT" ? "Enter Your Matric Number e.g SWD/HND/24/00001 " : "Enter Lecturer ID e.g LEC-12345"}
           autoComplete="username"
         />
 

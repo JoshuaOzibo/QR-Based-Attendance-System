@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
@@ -8,6 +8,11 @@ import { CalendarDays, Clock, MapPin, Users, Trash2, X, Search, Download, FileTe
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin-attendance")({
+  beforeLoad: () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+      throw redirect({ to: '/login' });
+    }
+  },
   head: () => ({
     meta: [{ title: "Attendance History — Sentinel.edu" }],
   }),

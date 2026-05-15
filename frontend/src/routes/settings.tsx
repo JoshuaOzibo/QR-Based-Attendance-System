@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { StudentSidebar } from "@/components/student-sidebar";
 import { useState, useEffect } from "react";
@@ -9,8 +9,13 @@ import { Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/settings")({
+  beforeLoad: () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+      throw redirect({ to: '/login' });
+    }
+  },
   head: () => ({
-    meta: [{ title: "Account Settings — Sentinel.edu" }],
+    meta: [{ title: "Settings — Sentinel.edu" }],
   }),
   component: SettingsPage,
 });

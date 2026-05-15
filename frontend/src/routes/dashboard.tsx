@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { StudentSidebar } from "@/components/student-sidebar";
 import { KpiCard } from "@/components/kpi-card";
 import {
@@ -25,6 +25,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/dashboard")({
+  beforeLoad: () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+      throw redirect({ to: '/login' });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Student Dashboard — Sentinel.edu" },

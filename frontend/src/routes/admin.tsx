@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { KpiCard } from "@/components/kpi-card";
 import {
@@ -17,6 +17,11 @@ import { fetchAPI } from "@/lib/api";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/admin")({
+  beforeLoad: () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+      throw redirect({ to: '/login' });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Admin Console — Sentinel.edu" },

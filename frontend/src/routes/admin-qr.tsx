@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { Play, Square } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -8,6 +8,11 @@ import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin-qr")({
+  beforeLoad: () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('token')) {
+      throw redirect({ to: '/login' });
+    }
+  },
   head: () => ({
     meta: [{ title: "Generate QR — Sentinel.edu" }],
   }),
