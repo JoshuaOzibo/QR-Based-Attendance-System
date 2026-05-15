@@ -59,11 +59,16 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}, expiresAt)
         activeSessions.set(sessionId, {
             ip: ipAddress,
             expiresAt: expiration,
+            cloudinaryPublicId: hasValidKey ? `sentinel_qrcodes/qr_${timestamp}` : null,
+            qrImage: qrImageUrl,
             ...sessionMetadata
         });
 
         setTimeout(() => {
-            activeSessions.delete(sessionId);
+            if (activeSessions.has(sessionId)) {
+                deleteQRCodeFromCloudinary(sessionId).catch(console.error);
+                activeSessions.delete(sessionId);
+            }
         }, expiration - timestamp);
 
         const result = {
@@ -80,11 +85,26 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}, expiresAt)
     }
 }
 
+export async function deleteQRCodeFromCloudinary(sessionId) {
+    const session = activeSessions.get(sessionId);
+    if (!session || !session.cloudinaryPublicId) return;
+
+    const hasValidKey = process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_KEY !== 'your_api_key';
+    if (hasValidKey) {
+        try {
+            await cloudinary.uploader.destroy(session.cloudinaryPublicId);
+        } catch (error) {
+            console.error('Failed to delete QR code from Cloudinary:', error);
+        }
+    }
+}
+
 export function validateSession(sessionId) {
     const session = activeSessions.get(sessionId);
     if (!session) return false;
     
     if (Date.now() > session.expiresAt) {
+        deleteQRCodeFromCloudinary(sessionId).catch(console.error);
         activeSessions.delete(sessionId);
         return false;
     }
