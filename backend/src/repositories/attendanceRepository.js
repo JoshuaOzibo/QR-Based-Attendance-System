@@ -9,8 +9,16 @@ export class AttendanceRepository {
         return Attendance.find({ date, status }).sort({ universityRollNo: 1 });
     }
 
+    static async getAttendanceBySession(sessionId) {
+        return Attendance.find({ sessionId, status: 'present' }).sort({ createdAt: -1 });
+    }
+
     static async countAttendanceByDate(date) {
         return Attendance.countDocuments({ date, status: 'present' });
+    }
+
+    static async countAttendanceBySession(sessionId) {
+        return Attendance.countDocuments({ sessionId, status: 'present' });
     }
 
     static async countFlaggedAttendance(date) {

@@ -24,13 +24,20 @@ export const getAttendanceDates = async (req, res) => {
     }
 };
 
-export const streamLiveAttendance = (req, res) => {
+export const streamLiveAttendance = async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
+    // Find the current active session at the time the SSE connection is opened
+    const now = Date.now();
+    const activeSession = await ClassSession.findOne({ status: 'active', expiresAt: { $gt: now } });
+    const activeSessionId = activeSession?.sessionId || null;
+
     const listener = (newRecord) => {
+        // Only broadcast records that belong to the currently active session
+        if (!activeSessionId || newRecord.sessionId?.toString() !== activeSessionId) return;
         res.write(`data: ${JSON.stringify(newRecord)}\n\n`);
     };
 
@@ -44,15 +51,17 @@ export const streamLiveAttendance = (req, res) => {
 export const getAttendanceByDate = async (req, res) => {
     try {
         const now = Date.now();
-        const activeCount = await ClassSession.countDocuments({ status: 'active', expiresAt: { $gt: now } });
-        if (activeCount === 0) {
+        // Find the single active session that hasn't expired
+        const activeSession = await ClassSession.findOne({ status: 'active', expiresAt: { $gt: now } });
+        if (!activeSession) {
             return res.json({ status: "success", data: [] });
         }
-        const attendance = await AttendanceService.getAttendanceByDate(req.query.date);
+        // Only return attendance records belonging to THIS session
+        const attendance = await AttendanceRepository.getAttendanceBySession(activeSession.sessionId);
         res.json({ status: "success", data: attendance });
     } catch (error) {
         console.error("Error fetching attendance by date:", error);
-        res.status(error.message.includes('required') ? 400 : 500).json({ status: "error", message: error.message });
+        res.status(500).json({ status: "error", message: error.message });
     }
 };
 
@@ -69,8 +78,13 @@ export const getAttendanceStats = async (req, res) => {
         let flaggedToday = 0;
 
         if (activeSessionsCount > 0) {
-            presentToday = await AttendanceRepository.countAttendanceByDate(today);
-            flaggedToday = await AttendanceRepository.countFlaggedAttendance(today); 
+            // Find the specific active session to count only its attendees
+            const activeSession = await ClassSession.findOne({ status: 'active', expiresAt: { $gt: now } });
+            if (activeSession) {
+                presentToday = await AttendanceRepository.countAttendanceBySession(activeSession.sessionId);
+            }
+            const today = new Date().toISOString().split('T')[0];
+            flaggedToday = await AttendanceRepository.countFlaggedAttendance(today);
         }
         
         res.json({
