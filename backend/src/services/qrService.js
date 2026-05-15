@@ -76,6 +76,7 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}, expiresAt)
             lecturerName: sessionMetadata.lecturerName,
             qrImageUrl: qrImageUrl,
             cloudinaryPublicId: hasValidKey ? `sentinel_qrcodes/qr_${timestamp}` : null,
+            expiresAt: expiration,
             status: 'active'
         });
         await dbSession.save();
@@ -141,4 +142,58 @@ export function validateSession(sessionId) {
 export function cleanupOldQRCodes() {
     // Legacy function. Cloudinary manages its own lifecycle or we can add delete calls later.
     // Kept here so app.js doesn't crash on setInterval.
+}
+
+export async function rehydrateSessions() {
+    try {
+        const activeDbSessions = await ClassSession.find({ status: 'active' });
+        const now = Date.now();
+        
+        for (const session of activeDbSessions) {
+            if (session.expiresAt && now > session.expiresAt) {
+                // Session expired while server was offline
+                await deleteQRCodeFromCloudinaryStr(session.cloudinaryPublicId);
+                await endDbSession(session.sessionId);
+            } else if (session.expiresAt) {
+                // Restore to memory map
+                activeSessions.set(session.sessionId, {
+                    ip: 'rehydrated', // We don't have the IP but we don't strictly need it
+                    expiresAt: session.expiresAt,
+                    cloudinaryPublicId: session.cloudinaryPublicId,
+                    qrImage: session.qrImageUrl,
+                    courseTitle: session.courseTitle,
+                    hall: session.hall,
+                    lecturerName: session.lecturerName,
+                    date: session.date,
+                    startTime: session.startTime,
+                    endTime: session.endTime,
+                    lecturerId: session.lecturerId?.toString()
+                });
+
+                // Recreate the timeout
+                setTimeout(() => {
+                    if (activeSessions.has(session.sessionId)) {
+                        deleteQRCodeFromCloudinary(session.sessionId).catch(console.error);
+                        endDbSession(session.sessionId).catch(console.error);
+                        activeSessions.delete(session.sessionId);
+                    }
+                }, session.expiresAt - now);
+            }
+        }
+        console.log(`Rehydrated ${activeSessions.size} active sessions from DB.`);
+    } catch (err) {
+        console.error("Failed to rehydrate sessions:", err);
+    }
+}
+
+async function deleteQRCodeFromCloudinaryStr(publicId) {
+    if (!publicId) return;
+    const hasValidKey = process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_KEY !== 'your_api_key';
+    if (hasValidKey) {
+        try {
+            await cloudinary.uploader.destroy(publicId);
+        } catch (error) {
+            console.error('Failed to delete QR code from Cloudinary:', error);
+        }
+    }
 }

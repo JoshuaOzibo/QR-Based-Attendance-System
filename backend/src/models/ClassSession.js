@@ -11,6 +11,7 @@ const classSessionSchema = new mongoose.Schema({
   lecturerName: { type: String },
   qrImageUrl: { type: String },
   cloudinaryPublicId: { type: String },
+  expiresAt: { type: Number },
   status: { type: String, enum: ['active', 'ended'], default: 'active' }
 }, {
   timestamps: true
