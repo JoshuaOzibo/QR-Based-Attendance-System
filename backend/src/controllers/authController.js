@@ -143,3 +143,21 @@ export const updateProfile = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+export const forgotPassword = async (req, res) => {
+    try {
+        const { universityRollNo } = req.body;
+        if (!universityRollNo) {
+            return res.status(400).json({ error: 'Please provide your University ID / Roll No' });
+        }
+        // Always return same message to prevent user enumeration attacks
+        const user = await User.findOne({ universityRollNo });
+        return res.json({
+            message: user
+                ? `Account found for ${user.name}. Please contact your system administrator to reset your password.`
+                : 'If this account exists, your administrator has been notified. Please contact them directly.',
+            exists: !!user
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};

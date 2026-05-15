@@ -33,7 +33,7 @@ export function SiteNav() {
               <Link to="/login" className="text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground">
                 Sign In
               </Link>
-              <Link to="/signup" className="rounded-md bg-[image:var(--gradient-primary)] px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform hover:scale-[1.02]">
+              <Link to="/login" className="rounded-md bg-[image:var(--gradient-primary)] px-4 py-2 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform hover:scale-[1.02]">
                 Sign Up
               </Link>
             </>
