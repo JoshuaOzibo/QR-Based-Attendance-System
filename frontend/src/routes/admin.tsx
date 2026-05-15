@@ -2,13 +2,9 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { KpiCard } from "@/components/kpi-card";
 import {
-  Bell,
-  Search,
   Download,
-  Users,
   Activity,
   Radio,
-  ShieldCheck,
 } from "lucide-react";
 
 import { useQuery } from "@tanstack/react-query";
@@ -120,11 +116,9 @@ function AdminPage() {
 
         <main className="mx-auto max-w-7xl space-y-8 p-6 lg:p-8">
           {/* KPIs */}
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard label="Total students" value={stats.totalStudents.toString()} delta="Enrolled" icon={Users} />
+          <div className="grid gap-5 sm:grid-cols-2">
             <KpiCard label="Present today" value={stats.presentToday.toString()} delta="Verified today" icon={Activity} />
             <KpiCard label="Active sessions" value={stats.activeSessions.toString()} delta="Ongoing" deltaTone="neutral" icon={Radio} />
-            <KpiCard label="Fraud prevention" value={stats.fraudPrevention} delta={`${stats.anomaliesBlocked} anomalies blocked`} icon={ShieldCheck} />
           </div>
 
           {/* Live attendance feed */}

@@ -158,7 +158,7 @@ function StudentDashboard() {
               </div>
               <div className="mt-5 flex items-start gap-2 rounded-lg bg-success/10 px-3 py-3 text-xs text-success">
                 <Sparkles className="mt-0.5 size-3.5 shrink-0" />
-                <span>Excellent attendance — you&apos;re safely above threshold.</span>
+                <span>Excellent attendance you&apos;re safely above threshold.</span>
               </div>
             </div>
 
