@@ -2,6 +2,7 @@ import { AttendanceService, attendanceEmitter } from '../services/attendanceServ
 import User from '../models/User.js';
 import { activeSessions } from '../services/qrService.js';
 import { AttendanceRepository } from '../repositories/attendanceRepository.js';
+import ClassSession from '../models/ClassSession.js';
 
 export const markAttendance = async (req, res) => {
     try {
@@ -42,6 +43,11 @@ export const streamLiveAttendance = (req, res) => {
 
 export const getAttendanceByDate = async (req, res) => {
     try {
+        const now = Date.now();
+        const activeCount = await ClassSession.countDocuments({ status: 'active', expiresAt: { $gt: now } });
+        if (activeCount === 0) {
+            return res.json({ status: "success", data: [] });
+        }
         const attendance = await AttendanceService.getAttendanceByDate(req.query.date);
         res.json({ status: "success", data: attendance });
     } catch (error) {
@@ -55,11 +61,17 @@ export const getAttendanceStats = async (req, res) => {
         const totalStudents = await User.countDocuments({ role: 'STUDENT' });
         
         const today = new Date().toISOString().split('T')[0];
-        const presentToday = await AttendanceRepository.countAttendanceByDate(today);
+        const now = Date.now();
+        // Only count sessions that are truly active (status=active AND not yet expired)
+        const activeSessionsCount = await ClassSession.countDocuments({ status: 'active', expiresAt: { $gt: now } });
 
-        const activeSessionsCount = activeSessions.size;
+        let presentToday = 0;
+        let flaggedToday = 0;
 
-        const flaggedToday = await AttendanceRepository.countFlaggedAttendance(today); 
+        if (activeSessionsCount > 0) {
+            presentToday = await AttendanceRepository.countAttendanceByDate(today);
+            flaggedToday = await AttendanceRepository.countFlaggedAttendance(today); 
+        }
         
         res.json({
             status: "success",

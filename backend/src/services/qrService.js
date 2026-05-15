@@ -148,6 +148,19 @@ export async function rehydrateSessions() {
     try {
         const activeDbSessions = await ClassSession.find({ status: 'active' });
         const now = Date.now();
+
+        // First: mark all legacy sessions without expiresAt as ended
+        const legacySessionIds = activeDbSessions
+            .filter(s => !s.expiresAt)
+            .map(s => s.sessionId);
+
+        if (legacySessionIds.length > 0) {
+            await ClassSession.updateMany(
+                { sessionId: { $in: legacySessionIds } },
+                { status: 'ended' }
+            );
+            console.log(`Marked ${legacySessionIds.length} stale/legacy session(s) as ended.`);
+        }
         
         for (const session of activeDbSessions) {
             if (session.expiresAt && now > session.expiresAt) {
