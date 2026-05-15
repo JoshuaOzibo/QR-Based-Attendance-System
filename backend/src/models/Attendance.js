@@ -3,8 +3,8 @@ import mongoose from 'mongoose';
 const attendancesSchema = new mongoose.Schema({
   name: { type: String, required: true },
   universityRollNo: { type: String, required: true },
-  section: { type: String, required: true },
-  classRollNo: { type: String, required: true },
+  section: { type: String, default: "N/A" },
+  classRollNo: { type: String, default: "N/A" },
   date: { type: String, required: true },
   time: {
     type: String,

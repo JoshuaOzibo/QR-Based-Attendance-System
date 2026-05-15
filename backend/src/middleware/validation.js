@@ -1,5 +1,5 @@
 export function validateAttendance(req, res, next) {
-    const required = ['name', 'universityRollNo', 'section', 'classRollNo', 'deviceFingerprint'];
+    const required = ['name', 'universityRollNo', 'deviceFingerprint'];
     const missing = required.filter(field => !req.body[field]);
   
     if (missing.length) {

@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { SiteNav } from "@/components/site-nav";
 import { MapPin, ShieldCheck, CheckCircle2, Loader2, ArrowRight } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
-import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/submit")({
   head: () => ({
@@ -27,33 +26,17 @@ type FormState = z.infer<typeof Schema>;
 function SubmitPage() {
   const navigate = useNavigate();
 
-  const { data: authData, isLoading: authLoading, error: authError } = useQuery({
-    queryKey: ['authMe'],
-    queryFn: () => fetchAPI<any>('/api/auth/me'),
-    retry: false
+  const [form, setForm] = useState<FormState>(() => {
+    // Try to auto-fill from previous successful submissions
+    const savedName = localStorage.getItem("savedFullName") || "";
+    const savedMatric = localStorage.getItem("savedMatric") || "";
+    return { fullName: savedName, matricNumber: savedMatric };
   });
-
-  useEffect(() => {
-    if (authError) {
-      navigate({ to: '/login' });
-    } else if (authData?.user && authData.user.role !== 'STUDENT') {
-      navigate({ to: '/admin' });
-    }
-  }, [authData, authError, navigate]);
-
-  const [form, setForm] = useState<FormState>({ fullName: "", matricNumber: "" });
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
 
-  useEffect(() => {
-    if (authData?.user) {
-      setForm({
-        fullName: authData.user.name || "",
-        matricNumber: authData.user.universityRollNo || ""
-      });
-    }
-  }, [authData]);
+
 
   // Auto fetch location on mount
   useEffect(() => {
@@ -98,6 +81,8 @@ function SubmitPage() {
     })
     .then(() => {
       setStatus("success");
+      localStorage.setItem("savedFullName", form.fullName);
+      localStorage.setItem("savedMatric", form.matricNumber);
       toast.success("Attendance marked successfully", { description: "Record safely stored." });
     })
     .catch((err) => {
@@ -106,9 +91,7 @@ function SubmitPage() {
     });
   };
 
-  if (authLoading || (authData?.user && authData.user.role !== 'STUDENT')) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">Loading...</div>;
-  }
+
 
   if (status === "success") {
     return (
@@ -131,12 +114,11 @@ function SubmitPage() {
             <Tile label="Time" value={new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} />
             <Tile label="GPS" value="±8m" />
           </div>
-          <Link
-            to="/dashboard"
-            className="mt-10 inline-flex items-center gap-2 rounded-md bg-[image:var(--gradient-primary)] px-5 py-3 text-sm font-semibold text-primary-foreground"
+          <div
+            className="mt-10 inline-flex items-center gap-2 rounded-md bg-[image:var(--gradient-primary)] px-5 py-3 text-sm font-semibold text-primary-foreground opacity-80"
           >
-            View Dashboard <ArrowRight className="size-4" />
-          </Link>
+            You may now close this tab.
+          </div>
         </main>
       </div>
     );
@@ -201,7 +183,7 @@ function SubmitPage() {
             <div className="mt-6 space-y-3 text-sm">
               <RowK k="Method" v="Dynamic QR" />
               <RowK k="Timestamp" v={new Date().toLocaleTimeString()} />
-              <RowK k="User" v={authData?.user?.name || "Authenticating..."} />
+              <RowK k="User" v={form.fullName || "Guest"} />
             </div>
           </div>
 
