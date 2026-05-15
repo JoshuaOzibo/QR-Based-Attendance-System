@@ -16,14 +16,15 @@ const attendancesSchema = new mongoose.Schema({
   },
   deviceFingerprint: { type: String, required: true },
   status: { type: String, default: "present" },
-  studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  sessionId: { type: String, required: true }
 }, {
   timestamps: true
 });
 
 // Create indexes
-attendancesSchema.index({ universityRollNo: 1, date: 1 });
-attendancesSchema.index({ deviceFingerprint: 1, date: 1 });
+attendancesSchema.index({ universityRollNo: 1, sessionId: 1 });
+attendancesSchema.index({ deviceFingerprint: 1, sessionId: 1 });
 
 const Attendance = mongoose.model('Attendance', attendancesSchema);
 export default Attendance;

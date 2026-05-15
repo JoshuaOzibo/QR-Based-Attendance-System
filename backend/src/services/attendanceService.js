@@ -9,20 +9,22 @@ export const attendanceEmitter = new EventEmitter();
 
 export class AttendanceService {
     static async markAttendance(data) {
-        const { universityRollNo, deviceFingerprint, location, name, section, classRollNo } = data;
+        const { universityRollNo, deviceFingerprint, location, name, section, classRollNo, sessionId } = data;
         const today = new Date().toISOString().split('T')[0];
+
+        if (!sessionId) throw new Error("Invalid session. Missing session ID.");
 
         const session = await mongoose.startSession();
         session.startTransaction();
 
         try {
             const [existing, existingDevice] = await Promise.all([
-                AttendanceRepository.findExistingAttendance(universityRollNo, today),
-                AttendanceRepository.findExistingDevice(deviceFingerprint, today)
+                AttendanceRepository.findExistingAttendance(universityRollNo, sessionId),
+                AttendanceRepository.findExistingDevice(deviceFingerprint, sessionId)
             ]);
 
-            if (existing) throw new Error("You've already marked attendance today");
-            if (existingDevice) throw new Error("This device has already been used to mark attendance today");
+            if (existing) throw new Error("You've already marked attendance for this session");
+            if (existingDevice) throw new Error("This device has already been used to mark attendance for this session");
 
             const distance = getDistanceFromLatLngInMeters(
                 location.lat, location.lng,

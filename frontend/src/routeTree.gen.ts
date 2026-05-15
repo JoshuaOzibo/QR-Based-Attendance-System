@@ -16,6 +16,7 @@ import { Route as SecurityRouteImport } from './routes/security'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AdminQrRouteImport } from './routes/admin-qr'
+import { Route as AdminAttendanceRouteImport } from './routes/admin-attendance'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -55,6 +56,11 @@ const AdminQrRoute = AdminQrRouteImport.update({
   path: '/admin-qr',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAttendanceRoute = AdminAttendanceRouteImport.update({
+  id: '/admin-attendance',
+  path: '/admin-attendance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/admin-attendance': typeof AdminAttendanceRoute
   '/admin-qr': typeof AdminQrRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/admin-attendance': typeof AdminAttendanceRoute
   '/admin-qr': typeof AdminQrRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/admin': typeof AdminRoute
+  '/admin-attendance': typeof AdminAttendanceRoute
   '/admin-qr': typeof AdminQrRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/admin-attendance'
     | '/admin-qr'
     | '/dashboard'
     | '/login'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/admin-attendance'
     | '/admin-qr'
     | '/dashboard'
     | '/login'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/admin'
+    | '/admin-attendance'
     | '/admin-qr'
     | '/dashboard'
     | '/login'
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AdminRoute: typeof AdminRoute
+  AdminAttendanceRoute: typeof AdminAttendanceRoute
   AdminQrRoute: typeof AdminQrRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminQrRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin-attendance': {
+      id: '/admin-attendance'
+      path: '/admin-attendance'
+      fullPath: '/admin-attendance'
+      preLoaderRoute: typeof AdminAttendanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -239,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AdminRoute: AdminRoute,
+  AdminAttendanceRoute: AdminAttendanceRoute,
   AdminQrRoute: AdminQrRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,

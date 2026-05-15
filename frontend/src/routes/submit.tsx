@@ -83,13 +83,17 @@ function SubmitPage() {
     // Fallback coordinates if location is denied (for testing purposes, usually we enforce this)
     const loc = location || { lat: 30.2679634, lng: 77.991887 };
     
+    const searchParams = new URLSearchParams(window.location.search);
+    const sessionId = searchParams.get('sessionId');
+
     fetchAPI('/api/attendance/mark', {
       method: 'POST',
       body: JSON.stringify({
         name: form.fullName,
         universityRollNo: form.matricNumber, // Map Matric Number to backend expectations
         deviceFingerprint: navigator.userAgent, // Basic fingerprinting
-        location: loc
+        location: loc,
+        sessionId
       })
     })
     .then(() => {

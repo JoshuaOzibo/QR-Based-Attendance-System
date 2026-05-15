@@ -1,4 +1,4 @@
-import { generateQRCode, validateSession, activeSessions, deleteQRCodeFromCloudinary } from '../services/qrService.js';
+import { generateQRCode, validateSession, activeSessions, deleteQRCodeFromCloudinary, endDbSession } from '../services/qrService.js';
 import { consistentHashJS, sha256 } from '../utils/hash.js';
 import { env } from '../config/env.js';
 
@@ -37,6 +37,7 @@ export const endSession = async (req, res) => {
     for (const [sessionId, session] of activeSessions.entries()) {
         if (session.lecturerId === userId) {
             await deleteQRCodeFromCloudinary(sessionId);
+            await endDbSession(sessionId);
             activeSessions.delete(sessionId);
             return res.json({ status: "success", message: "Session ended" });
         }

@@ -4,6 +4,7 @@ import attendanceRoutes from './attendanceRoutes.js';
 import qrRoutes from './qrRoutes.js';
 import algorithmRoutes from './algorithmRoutes.js';
 import authRoutes from './authRoutes.js';
+import sessionRoutes from './sessionRoutes.js';
 import { markAttendance } from '../controllers/attendanceController.js';
 import { verifyAttendanceRedirect } from '../controllers/qrController.js';
 import { validateAttendance } from '../middleware/validation.js';
@@ -16,6 +17,7 @@ router.use('/api/students', studentRoutes);
 router.use('/api/attendance', attendanceRoutes);
 router.use('/api', qrRoutes);
 router.use('/api', algorithmRoutes);
+router.use('/api/sessions', sessionRoutes);
 
 // Root/Global level routes (to maintain backward compatibility with old frontend URLs)
 router.post('/mark-attendance', validateAttendance, markAttendance);

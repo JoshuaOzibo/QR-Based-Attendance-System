@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import crypto from 'crypto';
 import { v2 as cloudinary } from 'cloudinary';
 import { env } from '../config/env.js';
+import ClassSession from '../models/ClassSession.js';
 
 // Configure Cloudinary
 // It expects the process.env vars: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
@@ -27,7 +28,7 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}, expiresAt)
                          .update(sessionId + timestamp + secretKey)
                          .digest('hex');
 
-        const qrData = `http://localhost:5000/verify-attendance?data=${encodeURIComponent(JSON.stringify({
+        const qrData = `${process.env.BASE_URL}/verify-attendance?data=${encodeURIComponent(JSON.stringify({
             sessionId,
             timestamp,
             hash
@@ -64,9 +65,25 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}, expiresAt)
             ...sessionMetadata
         });
 
+        const dbSession = new ClassSession({
+            sessionId,
+            courseTitle: sessionMetadata.courseTitle,
+            hall: sessionMetadata.hall,
+            date: sessionMetadata.date,
+            startTime: sessionMetadata.startTime,
+            endTime: sessionMetadata.endTime,
+            lecturerId: sessionMetadata.lecturerId,
+            lecturerName: sessionMetadata.lecturerName,
+            qrImageUrl: qrImageUrl,
+            cloudinaryPublicId: hasValidKey ? `sentinel_qrcodes/qr_${timestamp}` : null,
+            status: 'active'
+        });
+        await dbSession.save();
+
         setTimeout(() => {
             if (activeSessions.has(sessionId)) {
                 deleteQRCodeFromCloudinary(sessionId).catch(console.error);
+                endDbSession(sessionId).catch(console.error);
                 activeSessions.delete(sessionId);
             }
         }, expiration - timestamp);
@@ -99,12 +116,21 @@ export async function deleteQRCodeFromCloudinary(sessionId) {
     }
 }
 
+export async function endDbSession(sessionId) {
+    try {
+        await ClassSession.findOneAndUpdate({ sessionId }, { status: 'ended' });
+    } catch (err) {
+        console.error("Failed to end DB session:", err);
+    }
+}
+
 export function validateSession(sessionId) {
     const session = activeSessions.get(sessionId);
     if (!session) return false;
     
     if (Date.now() > session.expiresAt) {
         deleteQRCodeFromCloudinary(sessionId).catch(console.error);
+        endDbSession(sessionId).catch(console.error);
         activeSessions.delete(sessionId);
         return false;
     }

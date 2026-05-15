@@ -19,6 +19,7 @@ type NavItem = {
 const items: NavItem[] = [
   { to: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
   { to: "/admin-qr", label: "Generate QR", icon: ScanLine },
+  { to: "/admin-attendance", label: "Attendance", icon: Users },
 ];
 
 export function AdminSidebar() {

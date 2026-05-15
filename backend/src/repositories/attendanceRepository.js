@@ -17,12 +17,12 @@ export class AttendanceRepository {
         return Attendance.countDocuments({ date, status: 'flagged' });
     }
 
-    static async findExistingAttendance(universityRollNo, date) {
-        return Attendance.findOne({ universityRollNo, date });
+    static async findExistingAttendance(universityRollNo, sessionId) {
+        return Attendance.findOne({ universityRollNo, sessionId });
     }
 
-    static async findExistingDevice(deviceFingerprint, date) {
-        return Attendance.findOne({ deviceFingerprint, date });
+    static async findExistingDevice(deviceFingerprint, sessionId) {
+        return Attendance.findOne({ deviceFingerprint, sessionId });
     }
 
     static async createAttendance(data, session) {
