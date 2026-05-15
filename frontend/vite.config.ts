@@ -20,6 +20,9 @@ export default defineConfig({
           changeOrigin: true,
         }
       }
+    },
+    ssr: {
+      noExternal: ['jspdf']
     }
   }
 });
