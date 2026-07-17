@@ -27,7 +27,7 @@ app.use(helmet({
     }
 }));
 app.use(cors({
-    origin: ['http://localhost:8080', env.FRONTEND_URL].filter(Boolean),
+    origin: ['http://localhost:8080', env.FRONTEND_URL, 'http://localhost:8082'].filter(Boolean),
     credentials: true
 }));
 app.use(express.json());

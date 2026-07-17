@@ -76,6 +76,27 @@ function AdminQRPage() {
     endTime: ""
   });
 
+  // ── The actual QR generation call ──
+  const doGenerateQR = useCallback(async (formToUse = form) => {
+    setIsGenerating(true);
+    try {
+      const res = await fetchAPI<any>("/api/generate-qr", {
+        method: "POST",
+        body: JSON.stringify(formToUse)
+      });
+      setQrCode(res.qrImage);
+      setActiveSessionId(res.sessionId);
+      setExpiresAt(res.expiresAt);
+      // Clear scheduled session from localStorage since we now have an active session
+      localStorage.removeItem('sentinel_scheduled_session');
+      toast.success("Session started successfully!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to start session.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [form]);
+
   useEffect(() => {
     if (authData?.user) {
       setForm(prev => ({ ...prev, lecturerName: authData.user.name || "" }));
@@ -100,13 +121,49 @@ function AdminQRPage() {
           setQrCode(s.qrImage || null);
           setActiveSessionId(s.sessionId);
           setExpiresAt(s.expiresAt);
+          // If we restored an active session, clean up any scheduled sessions
+          localStorage.removeItem('sentinel_scheduled_session');
+          return;
         }
       } catch (err) {}
+
+      // If no active session, check for scheduled session in localStorage
+      if (authData?.user) {
+        const savedScheduled = localStorage.getItem('sentinel_scheduled_session');
+        if (savedScheduled) {
+          try {
+            const { form: savedForm, scheduleStartAt: savedStartAt, lecturerId: savedLecturerId } = JSON.parse(savedScheduled);
+            const currentUserId = authData.user.id || authData.user._id;
+            
+            if (savedLecturerId === currentUserId) {
+              const now = Date.now();
+              const endMs = parseDateTime(savedForm.date, savedForm.endTime);
+              
+              if (isNaN(endMs) || endMs <= now) {
+                // Scheduled session has already finished entirely, clear it
+                localStorage.removeItem('sentinel_scheduled_session');
+              } else if (now >= savedStartAt) {
+                // Start time has already passed while away, generate QR immediately
+                localStorage.removeItem('sentinel_scheduled_session');
+                setForm(savedForm);
+                await doGenerateQR(savedForm);
+              } else {
+                // Still in future, restore scheduled countdown state
+                setForm(savedForm);
+                setScheduleStartAt(savedStartAt);
+                setScheduleMode("scheduled");
+              }
+            }
+          } catch (e) {
+            localStorage.removeItem('sentinel_scheduled_session');
+          }
+        }
+      }
     };
     if (authData?.user?.role === 'LECTURER') {
       fetchSession();
     }
-  }, [authData]);
+  }, [authData, doGenerateQR]);
 
   // Session expiry countdown
   useEffect(() => {
@@ -124,24 +181,6 @@ function AdminQRPage() {
     return () => clearInterval(interval);
   }, [expiresAt]);
 
-  // ── The actual QR generation call ──
-  const doGenerateQR = useCallback(async () => {
-    setIsGenerating(true);
-    try {
-      const res = await fetchAPI<any>("/api/generate-qr", {
-        method: "POST",
-        body: JSON.stringify(form)
-      });
-      setQrCode(res.qrImage);
-      setActiveSessionId(res.sessionId);
-      setExpiresAt(res.expiresAt);
-      toast.success("Session started successfully!");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to start session.");
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [form]);
 
   // ── Scheduled countdown runner ──
   useEffect(() => {
@@ -154,6 +193,7 @@ function AdminQRPage() {
         setScheduleMode("idle");
         setScheduleStartAt(null);
         setScheduleCountdown("");
+        localStorage.removeItem('sentinel_scheduled_session');
         toast.info("Session start time reached — generating QR now…");
         doGenerateQR();
         return;
@@ -173,6 +213,7 @@ function AdminQRPage() {
     setScheduleMode("idle");
     setScheduleStartAt(null);
     setScheduleCountdown("");
+    localStorage.removeItem('sentinel_scheduled_session');
     toast.info("Scheduled session cancelled.");
   };
 
@@ -184,6 +225,7 @@ function AdminQRPage() {
     setActiveSessionId(null);
     setExpiresAt(null);
     setTimeLeft("");
+    localStorage.removeItem('sentinel_scheduled_session');
   };
 
   // ── Form submission logic ──
@@ -214,6 +256,16 @@ function AdminQRPage() {
     if (startMs > now + bufferMs) {
       setScheduleStartAt(startMs);
       setScheduleMode("scheduled");
+      
+      // Save scheduled session to localStorage
+      if (authData?.user) {
+        localStorage.setItem('sentinel_scheduled_session', JSON.stringify({
+          form,
+          scheduleStartAt: startMs,
+          lecturerId: authData.user.id || authData.user._id
+        }));
+      }
+      
       const minutesUntil = Math.ceil((startMs - now) / 60_000);
       toast.success(`Session scheduled! QR will generate in ~${minutesUntil} minute${minutesUntil !== 1 ? 's' : ''}.`);
     } else {
@@ -287,12 +339,28 @@ function AdminQRPage() {
                   You can stay on this page or come back — it will work either way.
                 </p>
 
-                <button
-                  onClick={handleCancelSchedule}
-                  className="mt-6 inline-flex items-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-5 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20"
-                >
-                  <X className="size-4" /> Cancel Scheduled Session
-                </button>
+                <div className="mt-6 flex flex-col sm:flex-row gap-3 w-full justify-center">
+                  <button
+                    onClick={async () => {
+                      if (scheduleTimerRef.current) clearInterval(scheduleTimerRef.current);
+                      setScheduleMode("idle");
+                      setScheduleStartAt(null);
+                      setScheduleCountdown("");
+                      localStorage.removeItem('sentinel_scheduled_session');
+                      toast.info("Starting scheduled session immediately...");
+                      await doGenerateQR();
+                    }}
+                    className="inline-flex items-center justify-center gap-2 rounded-md bg-[image:var(--gradient-primary)] px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-transform hover:scale-[1.02]"
+                  >
+                    <Play className="size-4" /> Start Session Now
+                  </button>
+                  <button
+                    onClick={handleCancelSchedule}
+                    className="inline-flex items-center justify-center gap-2 rounded-md border border-destructive/40 bg-destructive/10 px-5 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20"
+                  >
+                    <X className="size-4" /> Cancel Scheduled Session
+                  </button>
+                </div>
               </div>
             )}
 
