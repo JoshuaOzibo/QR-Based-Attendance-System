@@ -27,7 +27,14 @@ app.use(helmet({
     }
 }));
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:8080', env.FRONTEND_URL, 'http://localhost:8082'].filter(Boolean),
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        const allowed = ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:8082', env.FRONTEND_URL].filter(Boolean);
+        if (allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+            return callback(null, true);
+        }
+        callback(new Error(`CORS policy blocked origin: ${origin}`));
+    },
     credentials: true
 }));
 app.use(express.json());
@@ -44,7 +51,10 @@ app.use('/qrcodes', express.static(env.QR_CODE_DIR || path.join(__dirname, '../.
 // API Routes
 app.use(routes);
 
-// Health Check
+// Root & Health Check
+app.get('/', (req, res) => {
+    res.json({ status: "ok", message: "Sentinel Attendance API is running" });
+});
 app.get('/health', (req, res) => {
     res.json({ status: "ok", uptime: process.uptime() });
 });
