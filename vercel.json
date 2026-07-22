@@ -1,21 +1,15 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "builds": [
+  "version": 2,
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/dist/client",
+  "rewrites": [
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist/client"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "handle": "filesystem"
+      "source": "/assets/(.*)",
+      "destination": "/frontend/dist/client/assets/$1"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/index.html"
+      "source": "/(.*)",
+      "destination": "/frontend/api/index"
     }
   ]
 }
