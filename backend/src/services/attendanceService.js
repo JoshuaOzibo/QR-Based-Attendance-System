@@ -3,6 +3,7 @@ import { env } from '../config/env.js';
 import { getDistanceFromLatLngInMeters } from '../utils/geo.js';
 import { AttendanceRepository } from '../repositories/attendanceRepository.js';
 import { StudentRepository } from '../repositories/studentRepository.js';
+import { activeSessions } from './qrService.js';
 import { EventEmitter } from 'events';
 
 export const attendanceEmitter = new EventEmitter();
@@ -26,9 +27,13 @@ export class AttendanceService {
             if (existing) throw new Error("You've already marked attendance for this session");
             if (existingDevice) throw new Error("This device has already been used to mark attendance for this session");
 
+            const activeSession = activeSessions.get(sessionId);
+            const targetLat = activeSession?.lat ?? activeSession?.location?.lat ?? env.CLASS_LAT;
+            const targetLng = activeSession?.lng ?? activeSession?.location?.lng ?? env.CLASS_LNG;
+
             const distance = getDistanceFromLatLngInMeters(
                 location.lat, location.lng,
-                env.CLASS_LAT, env.CLASS_LNG
+                targetLat, targetLng
             );
 
             if (distance > env.MAX_DISTANCE_METERS) {

@@ -28,7 +28,8 @@ export async function generateQRCode(ipAddress, sessionMetadata = {}, expiresAt)
                          .update(sessionId + timestamp + secretKey)
                          .digest('hex');
 
-        const qrData = `${process.env.BASE_URL}/verify-attendance?data=${encodeURIComponent(JSON.stringify({
+        const baseUrl = env.BASE_URL || 'http://localhost:5000';
+        const qrData = `${baseUrl}/verify-attendance?data=${encodeURIComponent(JSON.stringify({
             sessionId,
             timestamp,
             hash
