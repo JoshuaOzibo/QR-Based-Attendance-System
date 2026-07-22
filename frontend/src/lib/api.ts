@@ -31,13 +31,14 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
   } catch (err: any) {
     console.error(`[fetchAPI Error] URL: ${url}`, err);
     if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
-      // Automatic retry once after 2.5 seconds (handles Render free tier cold-start wake up)
-      if (!(options as any)?._isRetry) {
-        console.warn(`[fetchAPI] Retrying connection to ${url} in 2.5s...`);
-        await new Promise((r) => setTimeout(r, 2500));
-        return fetchAPI<T>(endpoint, { ...options, _isRetry: true } as any);
+      const retryCount = (options as any)?._retryCount || 0;
+      if (retryCount < 2) {
+        const delay = (retryCount + 1) * 3000;
+        console.warn(`[fetchAPI] Backend connection offline or sleeping. Retrying (${retryCount + 1}/2) in ${delay / 1000}s...`);
+        await new Promise((r) => setTimeout(r, delay));
+        return fetchAPI<T>(endpoint, { ...options, _retryCount: retryCount + 1 } as any);
       }
-      throw new Error(`Unable to connect to backend server (${BASE_URL}). The server may be waking up from sleep — please wait 15 seconds and try again.`);
+      throw new Error(`Unable to connect to backend. Render free-tier server is waking up from sleep — please wait a few seconds and try again.`);
     }
     throw err;
   }

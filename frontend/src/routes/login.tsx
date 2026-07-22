@@ -23,6 +23,9 @@ function AuthPage() {
 
   // Auto-redirect if already logged in — no flash
   useEffect(() => {
+    // Pre-warm Render backend if it is asleep
+    fetchAPI<any>("/health").catch(() => {});
+
     const token = localStorage.getItem("token");
     if (!token) { setIsCheckingAuth(false); return; }
     fetchAPI<any>("/api/auth/me")
