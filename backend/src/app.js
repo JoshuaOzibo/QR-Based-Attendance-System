@@ -17,29 +17,16 @@ const app = express();
 // Security & Parsing Middleware
 app.use(helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
-    contentSecurityPolicy: {
-        useDefaults: true,
-        directives: {
-            "script-src": ["'self'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "'unsafe-inline'"],
-            "style-src": ["'self'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
-            "font-src": ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-            "img-src": ["'self'", "data:", "https://ui-avatars.com", "*"]
-        }
-    }
+    crossOriginOpenerPolicy: false,
+    contentSecurityPolicy: false
 }));
 
 app.use(cors({
-    origin: (origin, callback) => {
-        if (!origin) return callback(null, true);
-        const allowed = ['http://localhost:5173', 'http://localhost:8080', 'http://localhost:8082', env.FRONTEND_URL].filter(Boolean);
-        if (allowed.includes(origin) || origin.endsWith('.vercel.app')) {
-            return callback(null, true);
-        }
-        return callback(null, false);
-    },
+    origin: true,
     credentials: true,
     optionsSuccessStatus: 200
 }));
+app.options('*', cors());
 app.use(express.json());
 app.use(requestLogger);
 
