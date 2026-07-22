@@ -18,19 +18,27 @@ export const register = async (req, res) => {
         }
 
         const existingUser = await User.findOne({ universityRollNo });
-        if (existingUser) {
+        if (existingUser && (existingUser.passwordHash || existingUser.password)) {
             return res.status(400).json({ error: 'User with this ID already exists' });
         }
 
         const salt = await bcrypt.genSalt(10);
         const passwordHash = await bcrypt.hash(password, salt);
 
-        const user = await User.create({
-            name,
-            universityRollNo,
-            passwordHash,
-            role,
-        });
+        let user;
+        if (existingUser) {
+            existingUser.name = name || existingUser.name;
+            existingUser.passwordHash = passwordHash;
+            existingUser.role = role;
+            user = await existingUser.save();
+        } else {
+            user = await User.create({
+                name,
+                universityRollNo,
+                passwordHash,
+                role,
+            });
+        }
 
         const token = jwt.sign(
             { userId: user._id, role: user.role, rollNo: user.universityRollNo },
@@ -66,7 +74,12 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const isMatch = await bcrypt.compare(password, user.passwordHash);
+        const storedHash = user.passwordHash || user.password;
+        if (!storedHash) {
+            return res.status(401).json({ error: 'No password set for this ID. Please sign up to create a password.' });
+        }
+
+        const isMatch = await bcrypt.compare(password, storedHash);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }

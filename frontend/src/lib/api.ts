@@ -1,13 +1,10 @@
-// With Vite proxy, we no longer need the BASE_URL locally for development, 
-// but we keep it for production environments
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
 
 export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  // Ensure endpoint starts with a slash
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   const url = `${BASE_URL}${normalizedEndpoint}`;
   
-  // Simple LocalStorage token auth
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   
   const headers: Record<string, string> = {
@@ -16,18 +13,26 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
     ...(options.headers as Record<string, string>),
   };
 
-  const response = await fetch(url, { ...options, headers });
-  
-  let data;
   try {
-    data = await response.json();
-  } catch (err) {
-    data = { message: await response.text() };
+    const response = await fetch(url, { ...options, headers });
+    
+    let data;
+    try {
+      data = await response.json();
+    } catch (err) {
+      data = { message: await response.text() };
+    }
+    
+    if (!response.ok) {
+      throw new Error(data.message || data.error || `API request failed (${response.status})`);
+    }
+    
+    return data as T;
+  } catch (err: any) {
+    console.error(`[fetchAPI Error] URL: ${url}`, err);
+    if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
+      throw new Error(`Unable to connect to backend server (${BASE_URL || 'relative URL'}). Please verify backend status & CORS.`);
+    }
+    throw err;
   }
-  
-  if (!response.ok) {
-    throw new Error(data.message || data.error || 'API request failed');
-  }
-  
-  return data as T;
 }

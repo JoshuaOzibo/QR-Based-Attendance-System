@@ -16,16 +16,18 @@ const app = express();
 
 // Security & Parsing Middleware
 app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     contentSecurityPolicy: {
         useDefaults: true,
         directives: {
             "script-src": ["'self'", "https://cdn.tailwindcss.com", "https://cdn.jsdelivr.net", "'unsafe-inline'"],
             "style-src": ["'self'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
             "font-src": ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-            "img-src": ["'self'", "data:", "https://ui-avatars.com"]
+            "img-src": ["'self'", "data:", "https://ui-avatars.com", "*"]
         }
     }
 }));
+
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
@@ -33,9 +35,10 @@ app.use(cors({
         if (allowed.includes(origin) || origin.endsWith('.vercel.app')) {
             return callback(null, true);
         }
-        callback(new Error(`CORS policy blocked origin: ${origin}`));
+        return callback(null, false);
     },
-    credentials: true
+    credentials: true,
+    optionsSuccessStatus: 200
 }));
 app.use(express.json());
 app.use(requestLogger);
