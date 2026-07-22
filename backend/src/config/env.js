@@ -13,6 +13,7 @@ export const env = {
   MONGO_URI: process.env.MONGO_URI,
   PORT: process.env.PORT || 5000,
   NODE_ENV: process.env.NODE_ENV || 'development',
+  FRONTEND_URL: process.env.FRONTEND_URL,
   QR_SECRET_KEY: process.env.QR_SECRET_KEY || 'default-secret-key',
   QR_CODE_DIR: process.env.QR_CODE_DIR,
   CLASS_LAT: parseFloat(process.env.CLASS_LAT || 30.2679634),
