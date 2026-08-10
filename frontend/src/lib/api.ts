@@ -1,9 +1,13 @@
-const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-const BASE_URL = RAW_BASE_URL.replace(/\/+$/, '');
+const PRODUCTION_FALLBACK = 'https://qr-based-attendance-system-n65r.onrender.com';
+
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? PRODUCTION_FALLBACK : '')
+).replace(/\/+$/, '');
 
 export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${BASE_URL}${normalizedEndpoint}`;
+  const url = `${API_BASE_URL}${normalizedEndpoint}`;
   
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   

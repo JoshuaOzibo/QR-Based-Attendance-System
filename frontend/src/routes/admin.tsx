@@ -9,7 +9,7 @@ import {
 
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { fetchAPI } from "@/lib/api";
+import { fetchAPI, API_BASE_URL } from "@/lib/api";
 import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/admin")({
@@ -80,9 +80,7 @@ function AdminPage() {
   }, [initialLive]);
 
   useEffect(() => {
-    const sseUrl = import.meta.env.VITE_API_BASE_URL 
-      ? `${import.meta.env.VITE_API_BASE_URL}/api/attendance/live`
-      : 'http://localhost:5000/api/attendance/live';
+    const sseUrl = `${API_BASE_URL}/api/attendance/live`;
     
     const evtSource = new EventSource(sseUrl);
     evtSource.onmessage = (event) => {
