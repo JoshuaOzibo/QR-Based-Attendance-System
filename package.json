@@ -1,9 +1,13 @@
 {
+  "name": "qr-attendance-system-root",
+  "version": "1.0.0",
+  "private": true,
   "scripts": {
-    "start": "node backend/src/server.js",
-    "dev": "node backend/src/server.js"
+    "postinstall": "npm install --prefix backend",
+    "start": "cd backend && npm start",
+    "dev": "cd backend && npm run dev"
   },
   "dependencies": {
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.5.0"
   }
 }
