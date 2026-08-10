@@ -32,9 +32,9 @@ export async function fetchAPI<T>(endpoint: string, options: RequestInit = {}): 
     console.error(`[fetchAPI Error] URL: ${url}`, err);
     if (err.name === 'TypeError' && err.message === 'Failed to fetch') {
       const retryCount = (options as any)?._retryCount || 0;
-      if (retryCount < 2) {
-        const delay = (retryCount + 1) * 3000;
-        console.warn(`[fetchAPI] Backend connection offline or sleeping. Retrying (${retryCount + 1}/2) in ${delay / 1000}s...`);
+      if (retryCount < 5) {
+        const delay = Math.min(10000, (retryCount + 1) * 3000);
+        console.warn(`[fetchAPI] Backend connection offline or waking up. Retrying (${retryCount + 1}/5) in ${delay / 1000}s...`);
         await new Promise((r) => setTimeout(r, delay));
         return fetchAPI<T>(endpoint, { ...options, _retryCount: retryCount + 1 } as any);
       }
