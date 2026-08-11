@@ -46,7 +46,7 @@ function LandingPage() {
               <div className="mb-4 sm:mb-6 inline-flex max-w-full items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 sm:px-3.5">
                 <span className="size-2 animate-pulse rounded-full bg-primary shrink-0" />
                 <span className="text-[9px] min-[360px]:text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.15em] sm:tracking-[0.18em] text-primary truncate">
-                  Active Session · CS-402 Systems Architecture
+                  Active Session
                 </span>
               </div>
 
