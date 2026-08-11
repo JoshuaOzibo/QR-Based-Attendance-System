@@ -26,7 +26,7 @@ const seedDatabase = async () => {
         const studentPasswordHash = await bcrypt.hash('student123', salt);
         await User.create({
             name: 'Joshua Ozibo',
-            universityRollNo: 'AIT/HND/24/00036',
+            universityRollNo: 'SWD/HND/24/00001',
             passwordHash: studentPasswordHash,
             role: 'STUDENT',
             section: 'A',

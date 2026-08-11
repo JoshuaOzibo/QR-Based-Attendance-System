@@ -245,7 +245,7 @@ function SubmitPage() {
               value={form.matricNumber}
               onChange={(v) => setForm({ ...form, matricNumber: v })}
               error={errors.matricNumber}
-              placeholder="e.g., AIT/HND/24/00036"
+              placeholder="e.g. SWD/HND/24/00001"
               mono
             />
 

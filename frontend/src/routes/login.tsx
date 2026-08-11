@@ -352,7 +352,7 @@ function ForgotForm({ onSwitch }: { onSwitch: (t: Tab) => void }) {
             icon={<User className="size-4" />}
             value={rollNo}
             onChange={setRollNo}
-            placeholder="e.g. AIT/HND/24/00036"
+            placeholder="e.g. SWD/HND/24/00001"
           />
           <SubmitButton loading={loading} label="Look up account" />
         </form>
