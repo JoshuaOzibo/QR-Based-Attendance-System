@@ -64,7 +64,8 @@ function StudentDashboard() {
     enabled: !!rollNo
   });
 
-  const today = new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const { data: initialLive = [] } = useQuery({
     queryKey: ['attendance', 'live', today],
     queryFn: () => fetchAPI<any>(`/api/attendance/by-date?date=${today}`).then(res => res.data)

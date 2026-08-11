@@ -6,10 +6,15 @@ export const generateQR = async (req, res) => {
     try {
         const { courseTitle, hall, lecturerName, date, startTime, endTime } = req.body;
         
-        // Parse date and endTime to create exact Unix timestamp
-        const expiryDate = new Date(`${date}T${endTime}`);
+        let startMs = new Date(`${date}T${startTime}`).getTime();
+        let expiryDate = new Date(`${date}T${endTime}`);
         let expiresAt = expiryDate.getTime();
         
+        // Handle overnight sessions: if end time is before or equal to start time, add 1 day to expiresAt
+        if (!isNaN(startMs) && !isNaN(expiresAt) && expiresAt <= startMs) {
+            expiresAt += 24 * 60 * 60 * 1000;
+        }
+
         if (isNaN(expiresAt) || expiresAt <= Date.now()) {
             return res.status(400).json({ status: "error", message: "End time must be in the future." });
         }

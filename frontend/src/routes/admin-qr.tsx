@@ -19,6 +19,14 @@ export const Route = createFileRoute("/admin-qr")({
   component: AdminQRPage,
 });
 
+/** Format local Date to YYYY-MM-DD string without UTC offset issues */
+function getLocalDateString(d = new Date()): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /** Format milliseconds into a readable H:MM:SS or M:SS string */
 function formatMs(ms: number): string {
   if (ms <= 0) return "0:00";
@@ -71,7 +79,7 @@ function AdminQRPage() {
     courseTitle: "",
     hall: "",
     lecturerName: "",
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
     startTime: "",
     endTime: ""
   });
@@ -114,7 +122,7 @@ function AdminQRPage() {
             courseTitle: s.courseTitle || "",
             hall: s.hall || "",
             lecturerName: s.lecturerName || "",
-            date: s.date || new Date().toISOString().split('T')[0],
+            date: s.date || getLocalDateString(),
             startTime: s.startTime || "",
             endTime: s.endTime || ""
           });
@@ -239,15 +247,20 @@ function AdminQRPage() {
 
     const now = Date.now();
     const startMs = parseDateTime(form.date, form.startTime);
-    const endMs = parseDateTime(form.date, form.endTime);
+    let endMs = parseDateTime(form.date, form.endTime);
 
-    if (isNaN(endMs) || endMs <= now) {
-      toast.error("End time must be in the future.");
+    if (isNaN(startMs) || isNaN(endMs)) {
+      toast.error("Please enter valid start and end times.");
       return;
     }
 
-    if (startMs >= endMs) {
-      toast.error("Start time must be before end time.");
+    // Support overnight sessions: if end time is before or equal to start time, add 24 hours to end time
+    if (endMs <= startMs) {
+      endMs += 24 * 60 * 60 * 1000;
+    }
+
+    if (endMs <= now) {
+      toast.error("End time must be in the future.");
       return;
     }
 
