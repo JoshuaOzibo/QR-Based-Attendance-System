@@ -55,4 +55,13 @@ export class AttendanceRepository {
             }
         }).distinct('date');
     }
+
+    static async getAllAttendanceRecordsInRange(start, end) {
+        return Attendance.find({
+            date: {
+                $gte: start,
+                $lte: end
+            }
+        }).select('date status');
+    }
 }

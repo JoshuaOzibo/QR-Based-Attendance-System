@@ -103,7 +103,17 @@ function StudentDashboard() {
   }
 
   const percent = data?.attendancePercentage ?? 0;
-  
+  const isAboveThreshold = percent >= 75;
+
+  const weeklyPresent = data?.weeklyStats?.present ?? 0;
+  const weeklyTotal = data?.weeklyStats?.total ?? 0;
+  const weeklyPercentage = data?.weeklyStats?.percentage ?? 0;
+
+  const currentStreak = data?.streak?.current ?? 0;
+  const bestStreak = data?.streak?.best ?? 0;
+
+  const heatmap: { date: string; status: "present" | "absent" | "none" }[] = data?.heatmap ?? [];
+
   const trend = data?.chartData?.labels?.map((label: string, i: number) => ({
     day: label,
     pct: data.chartData.studentAttendance[i]
@@ -154,14 +164,38 @@ function StudentDashboard() {
                   <div className="mt-1 text-lg font-semibold text-primary">{data?.totalClasses ?? 0}</div>
                 </div>
               </div>
-              <div className="mt-5 flex items-start gap-2 rounded-lg bg-success/10 px-3 py-3 text-xs text-success">
-                <Sparkles className="mt-0.5 size-3.5 shrink-0" />
-                <span>Excellent attendance you&apos;re safely above threshold.</span>
+              <div
+                className={`mt-5 flex items-start gap-2 rounded-lg px-3 py-3 text-xs ${
+                  isAboveThreshold ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
+                }`}
+              >
+                {isAboveThreshold ? (
+                  <Sparkles className="mt-0.5 size-3.5 shrink-0" />
+                ) : (
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                )}
+                <span>
+                  {isAboveThreshold
+                    ? "Excellent attendance you're safely above threshold."
+                    : "Attendance below the 75% threshold — attend upcoming classes to recover."}
+                </span>
               </div>
             </div>
 
-            <KpiCard label="This week" value="5/6" delta="83% present" icon={CheckCircle2} />
-            <KpiCard label="Streak" value="12 days" delta="+3 best" icon={TrendingUp} />
+            <KpiCard
+              label="This week"
+              value={`${weeklyPresent}/${weeklyTotal}`}
+              delta={weeklyTotal > 0 ? `${weeklyPercentage}% present` : "No classes yet"}
+              deltaTone={weeklyTotal > 0 && weeklyPercentage < 75 ? "warning" : "positive"}
+              icon={CheckCircle2}
+            />
+            <KpiCard
+              label="Streak"
+              value={`${currentStreak} day${currentStreak === 1 ? "" : "s"}`}
+              delta={`Best: ${bestStreak} day${bestStreak === 1 ? "" : "s"}`}
+              deltaTone="neutral"
+              icon={TrendingUp}
+            />
             <KpiCard label="Next class" value="11:00" delta="MA-211 · Hall A-3" deltaTone="neutral" icon={CalendarDays} />
             <KpiCard
               label="At-risk courses"
@@ -177,7 +211,7 @@ function StudentDashboard() {
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-semibold">Attendance trend</h3>
-                  <p className="text-xs text-muted-foreground">Last 14 sessions</p>
+                  <p className="text-xs text-muted-foreground">Monthly attendance vs. department average</p>
                 </div>
               </div>
               <div className="h-64">
@@ -213,34 +247,27 @@ function StudentDashboard() {
             </div>
 
             <div className="rounded-2xl border border-border bg-card/40 p-6">
-              <h3 className="text-base font-semibold">Monthly heatmap</h3>
-              <p className="text-xs text-muted-foreground">Each cell = 1 session</p>
+              <h3 className="text-base font-semibold">Attendance heatmap</h3>
+              <p className="text-xs text-muted-foreground">Each cell = 1 day (last 60 days)</p>
               <div className="mt-5 grid grid-cols-10 gap-1.5">
-                {Array.from({ length: 60 }).map((_, i) => {
-                  const v = Math.random();
+                {heatmap.map((cell) => {
                   const cls =
-                    v > 0.85
-                      ? "bg-warning/40"
-                      : v > 0.7
-                        ? "bg-success/30"
-                        : v > 0.4
-                          ? "bg-success/60"
-                          : v > 0.15
-                            ? "bg-success"
-                            : "bg-border";
-                  return <div key={i} className={`aspect-square rounded ${cls}`} />;
+                    cell.status === "present"
+                      ? "bg-success"
+                      : cell.status === "absent"
+                        ? "bg-warning/40"
+                        : "bg-border";
+                  return <div key={cell.date} title={cell.date} className={`aspect-square rounded ${cls}`} />;
                 })}
               </div>
               <div className="mt-5 flex items-center justify-between text-[10px] text-muted-foreground">
-                <span>Less</span>
+                <span>No class</span>
                 <div className="flex gap-1">
-                  {["bg-border", "bg-success/30", "bg-success/60", "bg-success", "bg-warning/40"].map(
-                    (c) => (
-                      <span key={c} className={`size-2.5 rounded ${c}`} />
-                    ),
-                  )}
+                  {["bg-border", "bg-warning/40", "bg-success"].map((c) => (
+                    <span key={c} className={`size-2.5 rounded ${c}`} />
+                  ))}
                 </div>
-                <span>More</span>
+                <span>Present</span>
               </div>
             </div>
           </section>
