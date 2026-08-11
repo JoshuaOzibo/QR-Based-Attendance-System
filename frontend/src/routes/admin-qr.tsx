@@ -85,13 +85,19 @@ function AdminQRPage() {
     endTime: ""
   });
 
+  const formRef = useRef(form);
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
+
   // ── The actual QR generation call ──
-  const doGenerateQR = useCallback(async (formToUse = form) => {
+  const doGenerateQR = useCallback(async (formToUse?: typeof form) => {
     setIsGenerating(true);
+    const dataToSend = formToUse || formRef.current;
     try {
       const res = await fetchAPI<any>("/api/generate-qr", {
         method: "POST",
-        body: JSON.stringify(formToUse)
+        body: JSON.stringify(dataToSend)
       });
       setQrCode(res.qrImage);
       setActiveSessionId(res.sessionId);
@@ -104,7 +110,7 @@ function AdminQRPage() {
     } finally {
       setIsGenerating(false);
     }
-  }, [form]);
+  }, []);
 
   useEffect(() => {
     if (authData?.user) {
@@ -112,8 +118,14 @@ function AdminQRPage() {
     }
   }, [authData]);
 
-  // Restore any active session on mount
+  const hasFetchedSessionRef = useRef(false);
+
+  // Restore any active session on mount (only once per page mount)
   useEffect(() => {
+    if (!authData?.user || authData.user.role !== 'LECTURER') return;
+    if (hasFetchedSessionRef.current) return;
+    hasFetchedSessionRef.current = true;
+
     const fetchSession = async () => {
       try {
         const res = await fetchAPI<any>('/api/active-session');
@@ -137,42 +149,39 @@ function AdminQRPage() {
       } catch (err) {}
 
       // If no active session, check for scheduled session in localStorage
-      if (authData?.user) {
-        const savedScheduled = localStorage.getItem('sentinel_scheduled_session');
-        if (savedScheduled) {
-          try {
-            const { form: savedForm, scheduleStartAt: savedStartAt, lecturerId: savedLecturerId } = JSON.parse(savedScheduled);
-            const currentUserId = authData.user.id || authData.user._id;
+      const savedScheduled = localStorage.getItem('sentinel_scheduled_session');
+      if (savedScheduled) {
+        try {
+          const { form: savedForm, scheduleStartAt: savedStartAt, lecturerId: savedLecturerId } = JSON.parse(savedScheduled);
+          const currentUserId = authData.user.id || authData.user._id;
+          
+          if (savedLecturerId === currentUserId) {
+            const now = Date.now();
+            const endMs = parseDateTime(savedForm.date, savedForm.endTime);
             
-            if (savedLecturerId === currentUserId) {
-              const now = Date.now();
-              const endMs = parseDateTime(savedForm.date, savedForm.endTime);
-              
-              if (isNaN(endMs) || endMs <= now) {
-                // Scheduled session has already finished entirely, clear it
-                localStorage.removeItem('sentinel_scheduled_session');
-              } else if (now >= savedStartAt) {
-                // Start time has already passed while away, generate QR immediately
-                localStorage.removeItem('sentinel_scheduled_session');
-                setForm(savedForm);
-                await doGenerateQR(savedForm);
-              } else {
-                // Still in future, restore scheduled countdown state
-                setForm(savedForm);
-                setScheduleStartAt(savedStartAt);
-                setScheduleMode("scheduled");
-              }
+            if (isNaN(endMs) || endMs <= now) {
+              // Scheduled session has already finished entirely, clear it
+              localStorage.removeItem('sentinel_scheduled_session');
+            } else if (now >= savedStartAt) {
+              // Start time has already passed while away, generate QR immediately
+              localStorage.removeItem('sentinel_scheduled_session');
+              setForm(savedForm);
+              await doGenerateQR(savedForm);
+            } else {
+              // Still in future, restore scheduled countdown state
+              setForm(savedForm);
+              setScheduleStartAt(savedStartAt);
+              setScheduleMode("scheduled");
             }
-          } catch (e) {
-            localStorage.removeItem('sentinel_scheduled_session');
           }
+        } catch (e) {
+          localStorage.removeItem('sentinel_scheduled_session');
         }
       }
     };
-    if (authData?.user?.role === 'LECTURER') {
-      fetchSession();
-    }
-  }, [authData, doGenerateQR]);
+
+    fetchSession();
+  }, [authData?.user, doGenerateQR]);
 
   // Session expiry countdown
   useEffect(() => {
