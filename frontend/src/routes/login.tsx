@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Lock, User, Mail, ArrowRight, Loader2, CheckCircle2, ShieldCheck, Zap, Users } from "lucide-react";
 import { fetchAPI } from "@/lib/api";
@@ -51,12 +51,12 @@ function AuthPage() {
           <div className="absolute -top-32 -left-32 size-[500px] rounded-full bg-primary/20 blur-[120px]" />
           <div className="absolute bottom-0 right-0 size-[400px] rounded-full bg-violet-600/15 blur-[100px]" />
         </div>
-        <div className="relative flex items-center gap-3">
+        <Link to="/" className="relative flex items-center gap-3 hover:opacity-95 transition-opacity">
           <div className="flex size-10 items-center justify-center rounded-xl bg-primary/20 ring-1 ring-primary/30">
             <ShieldCheck className="size-5 text-primary" />
           </div>
           <span className="text-lg font-bold tracking-tight text-white">Sentinel<span className="text-primary">.edu</span></span>
-        </div>
+        </Link>
         <div className="relative space-y-8">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-[0.25em] text-primary mb-4">Attendance Intelligence</div>
@@ -90,10 +90,10 @@ function AuthPage() {
         </div>
       </div>
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 lg:px-16">
-        <div className="mb-8 flex items-center gap-2 lg:hidden">
+        <Link to="/" className="mb-8 flex items-center gap-2 lg:hidden hover:opacity-95 transition-opacity">
           <ShieldCheck className="size-6 text-primary" />
           <span className="text-lg font-bold">Sentinel<span className="text-primary">.edu</span></span>
-        </div>
+        </Link>
 
         <div className="w-full max-w-sm">
           {tab === "signin"  && <SignInForm  onSwitch={setTab} onSuccess={navigate} />}

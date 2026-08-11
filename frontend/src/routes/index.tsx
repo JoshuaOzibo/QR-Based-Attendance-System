@@ -31,24 +31,6 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
-  const navigate = useNavigate();
-
-  const { data: authData } = useQuery({
-    queryKey: ['authMe'],
-    queryFn: () => fetchAPI<any>('/api/auth/me'),
-    retry: false
-  });
-
-  useEffect(() => {
-    if (authData?.user) {
-      if (authData.user.role === 'LECTURER') {
-        navigate({ to: '/admin' });
-      } else {
-        navigate({ to: '/dashboard' });
-      }
-    }
-  }, [authData, navigate]);
-
   return (
     <div className="min-h-screen overflow-x-hidden">
       <SiteNav />
