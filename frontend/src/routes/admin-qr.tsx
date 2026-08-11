@@ -63,6 +63,7 @@ function AdminQRPage() {
   // ── Active session state ──
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isEndingSession, setIsEndingSession] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>("");
@@ -226,14 +227,20 @@ function AdminQRPage() {
   };
 
   const handleEndSession = async () => {
+    setIsEndingSession(true);
     try {
       await fetchAPI('/api/end-session', { method: 'DELETE' });
-    } catch(err) {}
-    setQrCode(null);
-    setActiveSessionId(null);
-    setExpiresAt(null);
-    setTimeLeft("");
-    localStorage.removeItem('sentinel_scheduled_session');
+      toast.success("Session ended successfully.");
+    } catch(err: any) {
+      toast.error(err.message || "Failed to end session on server.");
+    } finally {
+      setQrCode(null);
+      setActiveSessionId(null);
+      setExpiresAt(null);
+      setTimeLeft("");
+      setIsEndingSession(false);
+      localStorage.removeItem('sentinel_scheduled_session');
+    }
   };
 
   // ── Form submission logic ──
@@ -407,11 +414,11 @@ function AdminQRPage() {
                 </div>
 
                 <div className="mt-10 flex justify-center gap-4">
-                  <button onClick={() => doGenerateQR()} disabled={isGenerating} className="inline-flex items-center gap-2 rounded-md border border-border bg-card/80 px-6 py-3 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50">
+                  <button onClick={() => doGenerateQR()} disabled={isGenerating || isEndingSession} className="inline-flex items-center gap-2 rounded-md border border-border bg-card/80 px-6 py-3 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50">
                     <Play className="size-4" /> {isGenerating ? "Regenerating..." : "Regenerate QR"}
                   </button>
-                  <button onClick={handleEndSession} className="inline-flex items-center gap-2 rounded-md bg-destructive/15 px-6 py-3 text-sm font-semibold text-destructive ring-1 ring-destructive/30 transition-colors hover:bg-destructive/25">
-                    <Square className="size-4" /> End Session
+                  <button onClick={handleEndSession} disabled={isEndingSession} className="inline-flex items-center gap-2 rounded-md bg-destructive/15 px-6 py-3 text-sm font-semibold text-destructive ring-1 ring-destructive/30 transition-colors hover:bg-destructive/25 disabled:opacity-50">
+                    <Square className="size-4" /> {isEndingSession ? "Ending Session..." : "End Session"}
                   </button>
                 </div>
               </div>

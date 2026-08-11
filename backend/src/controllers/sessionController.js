@@ -1,6 +1,7 @@
 import ClassSession from '../models/ClassSession.js';
 import Attendance from '../models/Attendance.js';
 import { v2 as cloudinary } from 'cloudinary';
+import { activeSessions } from '../services/qrService.js';
 
 export const getLecturerSessions = async (req, res) => {
     try {
@@ -37,6 +38,9 @@ export const deleteSession = async (req, res) => {
         if (!session) {
             return res.status(404).json({ status: "error", message: "Session not found" });
         }
+
+        // Delete from in-memory activeSessions map
+        activeSessions.delete(sessionId);
 
         // Delete from cloudinary if it exists
         if (session.cloudinaryPublicId) {

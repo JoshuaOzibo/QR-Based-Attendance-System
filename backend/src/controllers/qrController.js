@@ -2,6 +2,8 @@ import { generateQRCode, validateSession, activeSessions, deleteQRCodeFromCloudi
 import { consistentHashJS, sha256 } from '../utils/hash.js';
 import { env } from '../config/env.js';
 
+import ClassSession from '../models/ClassSession.js';
+
 export const generateQR = async (req, res) => {
     try {
         const { courseTitle, hall, lecturerName, date, startTime, endTime } = req.body;
@@ -27,27 +29,94 @@ export const generateQR = async (req, res) => {
     }
 };
 
-export const getActiveSession = (req, res) => {
-    const userId = req.user.userId;
-    for (const [sessionId, session] of activeSessions.entries()) {
-        if (session.lecturerId === userId && session.expiresAt > Date.now()) {
-            return res.json({ status: "success", hasSession: true, session: { sessionId, ...session } });
+export const getActiveSession = async (req, res) => {
+    try {
+        const userId = String(req.user.userId);
+        const now = Date.now();
+
+        // 1. Check in-memory map
+        for (const [sessionId, session] of activeSessions.entries()) {
+            if (String(session.lecturerId) === userId && session.expiresAt > now) {
+                return res.json({ status: "success", hasSession: true, session: { sessionId, ...session } });
+            }
         }
+
+        // 2. Fallback check in MongoDB in case memory map was cleared or lost
+        const dbSession = await ClassSession.findOne({
+            lecturerId: userId,
+            status: 'active',
+            expiresAt: { $gt: now }
+        }).sort({ createdAt: -1 });
+
+        if (dbSession) {
+            activeSessions.set(dbSession.sessionId, {
+                ip: 'rehydrated',
+                expiresAt: dbSession.expiresAt,
+                cloudinaryPublicId: dbSession.cloudinaryPublicId,
+                qrImage: dbSession.qrImageUrl,
+                courseTitle: dbSession.courseTitle,
+                hall: dbSession.hall,
+                lecturerName: dbSession.lecturerName,
+                date: dbSession.date,
+                startTime: dbSession.startTime,
+                endTime: dbSession.endTime,
+                lecturerId: dbSession.lecturerId.toString()
+            });
+
+            return res.json({
+                status: "success",
+                hasSession: true,
+                session: {
+                    sessionId: dbSession.sessionId,
+                    qrImage: dbSession.qrImageUrl,
+                    expiresAt: dbSession.expiresAt,
+                    courseTitle: dbSession.courseTitle,
+                    hall: dbSession.hall,
+                    lecturerName: dbSession.lecturerName,
+                    date: dbSession.date,
+                    startTime: dbSession.startTime,
+                    endTime: dbSession.endTime,
+                    lecturerId: dbSession.lecturerId.toString()
+                }
+            });
+        }
+
+        return res.json({ status: "success", hasSession: false });
+    } catch (error) {
+        console.error("Error fetching active session:", error);
+        return res.status(500).json({ status: "error", message: "Failed to fetch active session" });
     }
-    return res.json({ status: "success", hasSession: false });
 };
 
 export const endSession = async (req, res) => {
-    const userId = req.user.userId;
-    for (const [sessionId, session] of activeSessions.entries()) {
-        if (session.lecturerId === userId) {
-            await deleteQRCodeFromCloudinary(sessionId);
-            await endDbSession(sessionId);
-            activeSessions.delete(sessionId);
-            return res.json({ status: "success", message: "Session ended" });
+    try {
+        const userId = String(req.user.userId);
+        let endedCount = 0;
+
+        // 1. Clear matching sessions from memory map
+        for (const [sessionId, session] of activeSessions.entries()) {
+            if (String(session.lecturerId) === userId) {
+                await deleteQRCodeFromCloudinary(sessionId);
+                await endDbSession(sessionId);
+                activeSessions.delete(sessionId);
+                endedCount++;
+            }
         }
+
+        // 2. Clear any active session for this lecturer in MongoDB
+        const dbActiveSessions = await ClassSession.find({ lecturerId: userId, status: 'active' });
+        for (const dbSess of dbActiveSessions) {
+            await deleteQRCodeFromCloudinary(dbSess.sessionId);
+            await endDbSession(dbSess.sessionId);
+            activeSessions.delete(dbSess.sessionId);
+            endedCount++;
+        }
+
+        return res.json({ status: "success", message: endedCount > 0 ? "Session ended successfully" : "No active session found" });
+    } catch (error) {
+        console.error("Error ending session:", error);
+        return res.status(500).json({ status: "error", message: "Failed to end session" });
     }
-    return res.json({ status: "success", message: "No active session found" });
 };
 
 export const validateQRSession = async (req, res) => {

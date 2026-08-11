@@ -6,6 +6,8 @@ import { StudentRepository } from '../repositories/studentRepository.js';
 import { activeSessions } from './qrService.js';
 import { EventEmitter } from 'events';
 
+import ClassSession from '../models/ClassSession.js';
+
 export const attendanceEmitter = new EventEmitter();
 
 export class AttendanceService {
@@ -14,6 +16,21 @@ export class AttendanceService {
         const today = new Date().toISOString().split('T')[0];
 
         if (!sessionId) throw new Error("Invalid session. Missing session ID.");
+
+        // Check DB session status and expiration
+        const dbSession = await ClassSession.findOne({ sessionId });
+        if (!dbSession) {
+            throw new Error("Invalid session. Session does not exist.");
+        }
+
+        const now = Date.now();
+        if (dbSession.status !== 'active' || (dbSession.expiresAt && now > dbSession.expiresAt)) {
+            activeSessions.delete(sessionId);
+            if (dbSession.status === 'active') {
+                await ClassSession.updateOne({ _id: dbSession._id }, { status: 'ended' });
+            }
+            throw new Error("This class session has already ended or expired.");
+        }
 
         const session = await mongoose.startSession();
         session.startTransaction();
@@ -28,8 +45,8 @@ export class AttendanceService {
             if (existingDevice) throw new Error("This device has already been used to mark attendance for this session");
 
             const activeSession = activeSessions.get(sessionId);
-            const targetLat = activeSession?.lat ?? activeSession?.location?.lat ?? env.CLASS_LAT;
-            const targetLng = activeSession?.lng ?? activeSession?.location?.lng ?? env.CLASS_LNG;
+            const targetLat = activeSession?.lat ?? activeSession?.location?.lat ?? dbSession?.lat ?? env.CLASS_LAT;
+            const targetLng = activeSession?.lng ?? activeSession?.location?.lng ?? dbSession?.lng ?? env.CLASS_LNG;
 
             const distance = getDistanceFromLatLngInMeters(
                 location.lat, location.lng,
