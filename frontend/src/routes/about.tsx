@@ -18,11 +18,11 @@ export const Route = createFileRoute("/about")({
 
 function AboutPage() {
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
       <StudentSidebar />
       <div className="min-w-0 flex-1">
-        <main className="mx-auto max-w-7xl px-6 py-10 lg:p-10">
-          <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
+        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:p-10">
+          <header className="mb-6 sm:mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
                 System Documentation

@@ -30,7 +30,7 @@ export function LiveQrCard() {
   const seconds = remaining % 60;
 
   return (
-    <div className="relative flex flex-col items-center justify-center rounded-3xl glass-strong p-5 sm:p-8 md:p-10 ring-glow w-full max-w-[400px] mx-auto overflow-hidden">
+    <div className="relative flex flex-col items-center justify-center rounded-3xl glass-strong p-4 min-[360px]:p-6 sm:p-8 ring-glow w-full max-w-[360px] sm:max-w-[400px] mx-auto overflow-hidden">
       {/* Header Info */}
       <div className="flex w-full items-center justify-between gap-2 mb-2">
         <div className="flex items-center gap-1.5 shrink-0">
@@ -39,12 +39,12 @@ export function LiveQrCard() {
             Live Session
           </span>
         </div>
-        <div className="font-mono text-[9px] min-[380px]:text-[10px] uppercase tracking-widest text-muted-foreground truncate">
+        <div className="font-mono text-[9px] min-[360px]:text-[10px] uppercase tracking-widest text-muted-foreground truncate">
           #SEC-8829-01
         </div>
       </div>
 
-      <div className="relative my-3 size-[230px] min-[380px]:size-[270px] sm:size-[310px] flex items-center justify-center">
+      <div className="relative my-2 min-[360px]:my-3 size-[200px] min-[360px]:size-[250px] sm:size-[290px] flex items-center justify-center shrink-0">
         {/* Countdown ring */}
         <svg className="absolute inset-0 size-full -rotate-90" viewBox="0 0 300 300">
           <circle
@@ -76,7 +76,7 @@ export function LiveQrCard() {
         </svg>
 
         {/* QR */}
-        <div className="absolute inset-6 min-[380px]:inset-8 sm:inset-9 overflow-hidden rounded-2xl bg-white p-2.5 sm:p-3 shadow-2xl">
+        <div className="absolute inset-5 min-[360px]:inset-7 sm:inset-8 overflow-hidden rounded-2xl bg-white p-2 min-[360px]:p-2.5 sm:p-3 shadow-2xl">
           <div key={seed} className="relative h-full w-full animate-float-up">
             <QrPattern seed={seed} />
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -86,25 +86,25 @@ export function LiveQrCard() {
         </div>
       </div>
 
-      <div className="mt-4 sm:mt-6 text-center">
-        <div className="font-mono text-3xl sm:text-4xl font-medium tracking-tight tabular-nums">
+      <div className="mt-3 sm:mt-5 text-center">
+        <div className="font-mono text-2xl min-[360px]:text-3xl sm:text-4xl font-medium tracking-tight tabular-nums">
           {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
         </div>
-        <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+        <p className="mt-0.5 text-xs sm:text-sm text-muted-foreground">
           Refreshing session keys in {remaining}s
         </p>
       </div>
 
-      <div className="mt-6 grid w-full grid-cols-3 border-t border-border pt-4 sm:pt-6 gap-1">
-        <Stat icon={<MapPin className="size-3.5 shrink-0" />} label="Location" value="Hall B-12" />
+      <div className="mt-4 sm:mt-6 grid w-full grid-cols-3 border-t border-border pt-3 min-[360px]:pt-4 sm:pt-6 gap-1">
+        <Stat icon={<MapPin className="size-3 shrink-0" />} label="Location" value="Hall B-12" />
         <Stat
-          icon={<Wifi className="size-3.5 shrink-0" />}
+          icon={<Wifi className="size-3 shrink-0" />}
           label="GPS"
           value="Verified"
           accent
           divider
         />
-        <Stat icon={<ScanLine className="size-3.5 shrink-0" />} label="Scanned" value="42 / 60" />
+        <Stat icon={<ScanLine className="size-3 shrink-0" />} label="Scanned" value="42 / 60" />
       </div>
     </div>
   );
@@ -124,12 +124,12 @@ function Stat({
   accent?: boolean;
 }) {
   return (
-    <div className={`px-1 text-center ${divider ? "border-x border-border" : ""}`}>
-      <div className="mb-1 flex items-center justify-center gap-1 text-[9px] min-[380px]:text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className={`px-0.5 min-[360px]:px-1 text-center ${divider ? "border-x border-border" : ""}`}>
+      <div className="mb-0.5 min-[360px]:mb-1 flex items-center justify-center gap-1 text-[8px] min-[360px]:text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {icon}
         <span className="truncate">{label}</span>
       </div>
-      <div className={`text-[11px] min-[380px]:text-xs font-medium truncate ${accent ? "text-success" : "text-foreground"}`}>
+      <div className={`text-[10px] min-[360px]:text-xs font-medium truncate ${accent ? "text-success" : "text-foreground"}`}>
         {value}
       </div>
     </div>

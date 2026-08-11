@@ -307,20 +307,20 @@ function AdminQRPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
       <AdminSidebar />
       <div className="min-w-0 flex-1">
-        <main className="mx-auto max-w-7xl px-6 py-10 lg:p-10">
-          <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
+        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:p-10">
+          <header className="mb-6 sm:mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
                 Session Management
               </div>
-              <h1 className="mt-2 text-4xl font-semibold tracking-tight">Active QR Session</h1>
+              <h1 className="mt-1 sm:mt-2 text-2xl sm:text-4xl font-semibold tracking-tight">Active QR Session</h1>
             </div>
           </header>
 
-          <div className="rounded-2xl border border-border bg-card/40 p-6 sm:p-10 flex flex-col items-center justify-center min-h-[500px]">
+          <div className="rounded-2xl border border-border bg-card/40 p-4 sm:p-6 lg:p-10 flex flex-col items-center justify-center min-h-[400px] sm:min-h-[500px]">
 
             {/* ── SCHEDULED MODE ── */}
             {scheduleMode === "scheduled" && !qrCode && (
@@ -418,15 +418,15 @@ function AdminQRPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-border bg-white p-4 shadow-[var(--shadow-glow)] inline-block">
-                  <img src={qrCode} alt="Scan to mark attendance" className="w-[400px] h-[400px]" />
+                <div className="rounded-2xl border border-border bg-white p-3 sm:p-4 shadow-[var(--shadow-glow)] inline-block max-w-full">
+                  <img src={qrCode} alt="Scan to mark attendance" className="w-[260px] h-[260px] min-[380px]:w-[320px] min-[380px]:h-[320px] sm:w-[400px] sm:h-[400px] object-contain max-w-full" />
                 </div>
 
-                <div className="mt-10 flex justify-center gap-4">
-                  <button onClick={() => doGenerateQR()} disabled={isGenerating || isEndingSession} className="inline-flex items-center gap-2 rounded-md border border-border bg-card/80 px-6 py-3 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50">
+                <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full sm:w-auto">
+                  <button onClick={() => doGenerateQR()} disabled={isGenerating || isEndingSession} className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-card/80 px-6 py-3 text-sm font-semibold transition-colors hover:bg-card disabled:opacity-50 w-full sm:w-auto">
                     <Play className="size-4" /> {isGenerating ? "Regenerating..." : "Regenerate QR"}
                   </button>
-                  <button onClick={handleEndSession} disabled={isEndingSession} className="inline-flex items-center gap-2 rounded-md bg-destructive/15 px-6 py-3 text-sm font-semibold text-destructive ring-1 ring-destructive/30 transition-colors hover:bg-destructive/25 disabled:opacity-50">
+                  <button onClick={handleEndSession} disabled={isEndingSession} className="inline-flex items-center justify-center gap-2 rounded-md bg-destructive/15 px-6 py-3 text-sm font-semibold text-destructive ring-1 ring-destructive/30 transition-colors hover:bg-destructive/25 disabled:opacity-50 w-full sm:w-auto">
                     <Square className="size-4" /> {isEndingSession ? "Ending Session..." : "End Session"}
                   </button>
                 </div>

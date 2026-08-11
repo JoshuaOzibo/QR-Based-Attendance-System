@@ -93,8 +93,6 @@ function AdminPage() {
     return () => evtSource.close();
   }, []);
 
-
-
   const live = liveStream.map(r => ({
     name: r.name || "Unknown",
     roll: r.universityRollNo || "N/A",
@@ -103,46 +101,47 @@ function AdminPage() {
     status: r.status === "present" ? "Present" : "Flagged",
     rawId: r._id
   }));
+
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
       <AdminSidebar />
 
       <div className="min-w-0 flex-1">
-        {/* Top bar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center border-b border-border bg-background/70 px-6 backdrop-blur-xl">
-          <h2 className="text-lg font-semibold tracking-tight">{greeting}, {lecturerName}</h2>
+        {/* Top greeting bar */}
+        <header className="sticky top-16 lg:top-0 z-30 flex h-14 sm:h-16 items-center border-b border-border bg-background/70 px-4 sm:px-6 backdrop-blur-xl">
+          <h2 className="text-base sm:text-lg font-semibold tracking-tight truncate">{greeting}, {lecturerName}</h2>
         </header>
 
-        <main className="mx-auto max-w-7xl space-y-8 p-6 lg:p-8">
+        <main className="mx-auto max-w-7xl space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8">
           {/* KPIs */}
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2">
             <KpiCard label="Present today" value={stats.presentToday.toString()} delta="Verified today" icon={Activity} />
             <KpiCard label="Active sessions" value={stats.activeSessions.toString()} delta="Ongoing" deltaTone="neutral" icon={Radio} />
           </div>
 
           {/* Live attendance feed */}
-          <section className="rounded-2xl border border-border bg-card/40">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <section className="rounded-2xl border border-border bg-card/40 overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border px-4 sm:px-6 py-4 gap-3">
               <div className="flex items-center gap-3">
                 <h3 className="text-base font-semibold">Live attendance stream</h3>
                 <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-success">
                   <span className="size-1.5 animate-pulse rounded-full bg-success" /> Real-time
                 </span>
               </div>
-              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold">
+              <button className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold">
                 <Download className="size-3.5" /> Export
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto min-w-full">
+              <table className="w-full text-left text-sm min-w-[600px]">
                 <thead className="bg-card/40 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   <tr>
-                    <th className="px-6 py-3 font-semibold">Student</th>
-                    <th className="px-6 py-3 font-semibold">Roll</th>
-                    <th className="px-6 py-3 font-semibold">Verification</th>
-                    <th className="px-6 py-3 font-semibold">Time</th>
-                    <th className="px-6 py-3 font-semibold text-right">Status</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Student</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Roll</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Verification</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Time</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
@@ -153,14 +152,14 @@ function AdminPage() {
                   )}
                   {live.map((r: any) => (
                     <tr key={r.rawId || r.roll + r.time} className="transition-colors hover:bg-card/60">
-                      <td className="flex items-center gap-3 px-6 py-3.5 font-medium">
-                        <div className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                      <td className="flex items-center gap-3 px-4 sm:px-6 py-3.5 font-medium">
+                        <div className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary shrink-0">
                           {r.name.split(" ").map((p: any) => p[0]).join("")}
                         </div>
-                        {r.name}
+                        <span className="truncate">{r.name}</span>
                       </td>
-                      <td className="px-6 py-3.5 font-mono text-xs text-muted-foreground">{r.roll}</td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 sm:px-6 py-3.5 font-mono text-xs text-muted-foreground">{r.roll}</td>
+                      <td className="px-4 sm:px-6 py-3.5">
                         <span
                           className={`inline-flex items-center gap-1.5 text-xs ${
                             r.verify.includes("Verified")
@@ -182,8 +181,8 @@ function AdminPage() {
                           {r.verify}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5 font-mono text-xs">{r.time}</td>
-                      <td className="px-6 py-3.5 text-right">
+                      <td className="px-4 sm:px-6 py-3.5 font-mono text-xs">{r.time}</td>
+                      <td className="px-4 sm:px-6 py-3.5 text-right">
                         {r.status === "Present" ? (
                           <span className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
                             PRESENT

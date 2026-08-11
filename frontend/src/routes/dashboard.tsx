@@ -94,7 +94,7 @@ function StudentDashboard() {
 
   if (authLoading || dataLoading || !rollNo) {
     return (
-      <div className="flex min-h-screen bg-background">
+      <div className="flex flex-col lg:flex-row min-h-screen bg-background">
         <StudentSidebar />
         <main className="flex-1 flex items-center justify-center h-screen">
            <div className="animate-pulse text-muted-foreground">Loading dashboard...</div>
@@ -130,17 +130,17 @@ function StudentDashboard() {
   }));
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
       <StudentSidebar />
       <div className="min-w-0 flex-1">
-        <main className="mx-auto max-w-7xl px-6 py-10 lg:p-10">
-          <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
+        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10 lg:p-10">
+          <header className="mb-6 sm:mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
               <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
                 Welcome back, {authData?.user?.name || "Student"}
               </div>
-              <h1 className="mt-2 text-4xl font-semibold tracking-tight">Your attendance pulse</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <h1 className="mt-1 sm:mt-2 text-2xl sm:text-4xl font-semibold tracking-tight">Your attendance pulse</h1>
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
                 {rollNo}
               </p>
             </div>
@@ -149,24 +149,24 @@ function StudentDashboard() {
             </div>
           </header>
 
-          <section className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl glass-strong p-6 ring-glow lg:row-span-2">
+          <section className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl glass-strong p-5 sm:p-6 ring-glow lg:row-span-2">
               <div className="text-xs font-medium text-muted-foreground">Overall attendance</div>
-              <div className="mt-6 flex items-center justify-center">
+              <div className="mt-4 sm:mt-6 flex items-center justify-center">
                 <ProgressRing value={percent} />
               </div>
-              <div className="mt-6 grid grid-cols-2 gap-3 text-center text-sm">
+              <div className="mt-4 sm:mt-6 grid grid-cols-2 gap-3 text-center text-sm">
                 <div className="rounded-lg border border-border bg-card/30 p-3">
                   <div className="text-[10px] uppercase text-muted-foreground">Present</div>
-                  <div className="mt-1 text-lg font-semibold text-success">{data?.presentDays ?? 0}</div>
+                  <div className="mt-1 text-base sm:text-lg font-semibold text-success">{data?.presentDays ?? 0}</div>
                 </div>
                 <div className="rounded-lg border border-border bg-card/30 p-3">
                   <div className="text-[10px] uppercase text-muted-foreground">Total Classes</div>
-                  <div className="mt-1 text-lg font-semibold text-primary">{data?.totalClasses ?? 0}</div>
+                  <div className="mt-1 text-base sm:text-lg font-semibold text-primary">{data?.totalClasses ?? 0}</div>
                 </div>
               </div>
               <div
-                className={`mt-5 flex items-start gap-2 rounded-lg px-3 py-3 text-xs ${
+                className={`mt-4 sm:mt-5 flex items-start gap-2 rounded-lg px-3 py-3 text-xs ${
                   isAboveThreshold ? "bg-success/10 text-success" : "bg-warning/10 text-warning"
                 }`}
               >
@@ -177,8 +177,8 @@ function StudentDashboard() {
                 )}
                 <span>
                   {isAboveThreshold
-                    ? "Excellent attendance you're safely above threshold."
-                    : "Attendance below the 75% threshold — attend upcoming classes to recover."}
+                    ? "Excellent attendance — safely above threshold."
+                    : "Attendance below 75% threshold — attend upcoming classes."}
                 </span>
               </div>
             </div>
@@ -207,15 +207,15 @@ function StudentDashboard() {
             />
           </section>
 
-          <section className="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-            <div className="rounded-2xl border border-border bg-card/40 p-6">
+          <section className="mt-6 sm:mt-8 grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-[1.4fr_1fr]">
+            <div className="rounded-2xl border border-border bg-card/40 p-4 sm:p-6">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-semibold">Attendance trend</h3>
                   <p className="text-xs text-muted-foreground">Monthly attendance vs. department average</p>
                 </div>
               </div>
-              <div className="h-64">
+              <div className="h-56 sm:h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trend}>
                     <defs>
@@ -247,10 +247,10 @@ function StudentDashboard() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-border bg-card/40 p-6">
+            <div className="rounded-2xl border border-border bg-card/40 p-4 sm:p-6">
               <h3 className="text-base font-semibold">Attendance heatmap</h3>
               <p className="text-xs text-muted-foreground">Each cell = 1 day (last 60 days)</p>
-              <div className="mt-5 grid grid-cols-10 gap-1.5">
+              <div className="mt-4 sm:mt-5 grid grid-cols-10 gap-1 sm:gap-1.5">
                 {heatmap.map((cell) => {
                   const cls =
                     cell.status === "present"
@@ -261,7 +261,7 @@ function StudentDashboard() {
                   return <div key={cell.date} title={cell.date} className={`aspect-square rounded ${cls}`} />;
                 })}
               </div>
-              <div className="mt-5 flex items-center justify-between text-[10px] text-muted-foreground">
+              <div className="mt-4 sm:mt-5 flex items-center justify-between text-[10px] text-muted-foreground">
                 <span>No class</span>
                 <div className="flex gap-1">
                   {["bg-border", "bg-warning/40", "bg-success"].map((c) => (
@@ -274,28 +274,28 @@ function StudentDashboard() {
           </section>
 
           {/* Live attendance feed */}
-          <section className="mt-8 rounded-2xl border border-border bg-card/40">
-            <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <section className="mt-6 sm:mt-8 rounded-2xl border border-border bg-card/40 overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border px-4 sm:px-6 py-4 gap-3">
               <div className="flex items-center gap-3">
                 <h3 className="text-base font-semibold">Live attendance stream</h3>
                 <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-success">
                   <span className="size-1.5 animate-pulse rounded-full bg-success" /> Real-time
                 </span>
               </div>
-              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold">
+              <button className="self-start sm:self-auto inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-semibold">
                 <Download className="size-3.5" /> Export
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
+            <div className="overflow-x-auto min-w-full">
+              <table className="w-full text-left text-sm min-w-[600px]">
                 <thead className="bg-card/40 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                   <tr>
-                    <th className="px-6 py-3 font-semibold">Student</th>
-                    <th className="px-6 py-3 font-semibold">Roll</th>
-                    <th className="px-6 py-3 font-semibold">Verification</th>
-                    <th className="px-6 py-3 font-semibold">Time</th>
-                    <th className="px-6 py-3 font-semibold text-right">Status</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Student</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Roll</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Verification</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold">Time</th>
+                    <th className="px-4 sm:px-6 py-3 font-semibold text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
@@ -306,14 +306,14 @@ function StudentDashboard() {
                   )}
                   {live.map((r: any) => (
                     <tr key={r.rawId || r.roll + r.time} className="transition-colors hover:bg-card/60">
-                      <td className="flex items-center gap-3 px-6 py-3.5 font-medium">
-                        <div className="flex size-8 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">
+                      <td className="flex items-center gap-3 px-4 sm:px-6 py-3.5 font-medium">
+                        <div className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary shrink-0">
                           {r.name.split(" ").map((p: any) => p[0]).join("")}
                         </div>
-                        {r.name}
+                        <span className="truncate">{r.name}</span>
                       </td>
-                      <td className="px-6 py-3.5 font-mono text-xs text-muted-foreground">{r.roll}</td>
-                      <td className="px-6 py-3.5">
+                      <td className="px-4 sm:px-6 py-3.5 font-mono text-xs text-muted-foreground">{r.roll}</td>
+                      <td className="px-4 sm:px-6 py-3.5">
                         <span
                           className={`inline-flex items-center gap-1.5 text-xs ${
                             r.verify.includes("Verified")
@@ -335,8 +335,8 @@ function StudentDashboard() {
                           {r.verify}
                         </span>
                       </td>
-                      <td className="px-6 py-3.5 font-mono text-xs">{r.time}</td>
-                      <td className="px-6 py-3.5 text-right">
+                      <td className="px-4 sm:px-6 py-3.5 font-mono text-xs">{r.time}</td>
+                      <td className="px-4 sm:px-6 py-3.5 text-right">
                         {r.status === "Present" ? (
                           <span className="rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-bold text-success">
                             PRESENT
@@ -364,7 +364,7 @@ function ProgressRing({ value }: { value: number }) {
   const c = 2 * Math.PI * r;
   const offset = c * (1 - value / 100);
   return (
-    <div className="relative size-44">
+    <div className="relative size-36 sm:size-44">
       <svg viewBox="0 0 180 180" className="size-full -rotate-90">
         <circle cx="90" cy="90" r={r} stroke="oklch(1 0 0 / 0.06)" strokeWidth="10" fill="none" />
         <circle
@@ -386,8 +386,8 @@ function ProgressRing({ value }: { value: number }) {
         </defs>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="text-4xl font-semibold tracking-tight">{value}%</div>
-        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Above 75</div>
+        <div className="text-3xl sm:text-4xl font-semibold tracking-tight">{value}%</div>
+        <div className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground">Above 75</div>
       </div>
     </div>
   );
